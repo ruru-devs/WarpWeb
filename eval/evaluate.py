@@ -81,8 +81,11 @@ def run_evaluation(
         idx = HybridIndex(sid)
         sections = db.get_sections(sid)
         overrides = db.get_overrides(sid)
+        synonyms = db.get_synonyms(sid)
+        cached_embeddings = db.get_section_embeddings(sid)
         idx.set_overrides(overrides)
-        idx.index_sections(sections)
+        idx.set_synonyms(synonyms)
+        idx.index_sections(sections, cached_embeddings=cached_embeddings, db_manager=db)
         indices[sid] = idx
 
     pos_queries = [q for q in queries if q.get("should_match", True)]

@@ -46,7 +46,12 @@ def index_folder_site(
     # Persist site & all sections
     db.save_site(site_id, domain, name)
     db.save_sections(site_id, all_sections)
-    print(f"[{name}] Successfully indexed total of {len(all_sections)} cross-page sections!")
+
+    # Precompute and persist dense embeddings into SQLite
+    index = HybridIndex(site_id)
+    index.index_sections(all_sections, db_manager=db)
+
+    print(f"[{name}] Successfully indexed total of {len(all_sections)} cross-page sections (with embeddings)!")
     return len(all_sections)
 
 if __name__ == "__main__":

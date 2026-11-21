@@ -29,15 +29,15 @@ def setup_db_and_limiter():
     lead_site_limiter.reset()
     active_indices.clear()
 
-    # Ensure demo sites exist in DB
-    db.save_site("apexcare-clinic", "apexcareclinic.com", "Apex Care Clinic")
-    db.set_site_api_key("apexcare-clinic", "ww_dev_apexcare_secret")
+    # Ensure test sites exist in DB
+    db.save_site("test-sec-apexcare", "apexcareclinic.com", "Apex Care Clinic")
+    db.set_site_api_key("test-sec-apexcare", "ww_dev_apexcare_secret")
 
-    db.save_site("shoppulse-commerce", "pulsetechaudio.com", "PulseTech Audio")
-    db.set_site_api_key("shoppulse-commerce", "ww_dev_shoppulse_secret")
+    db.save_site("test-sec-pulse", "pulsetechaudio.com", "PulseTech Audio")
+    db.set_site_api_key("test-sec-pulse", "ww_dev_shoppulse_secret")
 
-    # Add realistic sections for apexcare
-    db.save_sections("apexcare-clinic", [
+    # Add realistic sections for test-sec-apexcare
+    db.save_sections("test-sec-apexcare", [
         SectionNode(
             id="sec_1",
             url="https://apexcareclinic.com/doctors",
@@ -64,7 +64,7 @@ def setup_db_and_limiter():
 def test_public_search_anonymous_access():
     """Anonymous visitors must be able to search without an API key."""
     res = client.post("/api/search", json={
-        "site_id": "apexcare-clinic",
+        "site_id": "test-sec-apexcare",
         "query": "sharma timings",
         "top_k": 5
     })
@@ -85,7 +85,7 @@ def test_public_search_unknown_site_404():
 def test_public_lead_submission_anonymous_access():
     """Anonymous visitors can submit lead for an existing site."""
     res = client.post("/api/leads", json={
-        "site_id": "apexcare-clinic",
+        "site_id": "test-sec-apexcare",
         "query": "skin specialist",
         "visitor_contact": "+91 9999988888",
         "note": "Looking for acne consultation"
@@ -95,35 +95,35 @@ def test_public_lead_submission_anonymous_access():
 
 def test_owner_analytics_requires_auth():
     """Accessing owner analytics without API key must return 401."""
-    res = client.get("/api/analytics/apexcare-clinic")
+    res = client.get("/api/analytics/test-sec-apexcare")
     assert res.status_code == 401
 
 def test_owner_analytics_invalid_key():
     """Accessing owner analytics with wrong API key must return 403."""
-    res = client.get("/api/analytics/apexcare-clinic", headers={"X-API-Key": "wrong-secret-key"})
+    res = client.get("/api/analytics/test-sec-apexcare", headers={"X-API-Key": "wrong-secret-key"})
     assert res.status_code == 403
 
 def test_owner_analytics_valid_key():
     """Accessing owner analytics with valid API key returns 200."""
-    res = client.get("/api/analytics/apexcare-clinic", headers={"X-API-Key": "ww_dev_apexcare_secret"})
+    res = client.get("/api/analytics/test-sec-apexcare", headers={"X-API-Key": "ww_dev_apexcare_secret"})
     assert res.status_code == 200
     assert "total_queries" in res.json()
 
 def test_tenant_isolation_cross_tenant_access_denied():
     """An API key for Site A cannot access or modify Site B."""
     # shoppulse key used on apexcare analytics
-    res = client.get("/api/analytics/apexcare-clinic", headers={"X-API-Key": "ww_dev_shoppulse_secret"})
+    res = client.get("/api/analytics/test-sec-apexcare", headers={"X-API-Key": "ww_dev_shoppulse_secret"})
     assert res.status_code == 403
     assert "Access denied" in res.json()["detail"]
 
     # shoppulse key used on apexcare overrides
-    res = client.get("/api/overrides/apexcare-clinic", headers={"X-API-Key": "ww_dev_shoppulse_secret"})
+    res = client.get("/api/overrides/test-sec-apexcare", headers={"X-API-Key": "ww_dev_shoppulse_secret"})
     assert res.status_code == 403
 
 def test_override_creation_requires_auth():
     """Creating an override without auth must return 401."""
     res = client.post("/api/overrides", json={
-        "site_id": "apexcare-clinic",
+        "site_id": "test-sec-apexcare",
         "intent_phrase": "dr sharma timings",
         "target_url": "#doc-sharma",
         "action_label": "Reserve Doctor",
@@ -137,7 +137,7 @@ def test_override_target_url_security():
 
     # 1. javascript: scheme rejected
     res_js = client.post("/api/overrides", headers=headers, json={
-        "site_id": "apexcare-clinic",
+        "site_id": "test-sec-apexcare",
         "intent_phrase": "hack",
         "target_url": "javascript:alert(document.cookie)",
         "action_label": "Click me"
@@ -147,7 +147,7 @@ def test_override_target_url_security():
 
     # 2. data: scheme rejected
     res_data = client.post("/api/overrides", headers=headers, json={
-        "site_id": "apexcare-clinic",
+        "site_id": "test-sec-apexcare",
         "intent_phrase": "phish",
         "target_url": "data:text/html,<script>alert(1)</script>",
         "action_label": "Click me"
@@ -156,7 +156,7 @@ def test_override_target_url_security():
 
     # 3. External domain rejected
     res_ext = client.post("/api/overrides", headers=headers, json={
-        "site_id": "apexcare-clinic",
+        "site_id": "test-sec-apexcare",
         "intent_phrase": "external scam",
         "target_url": "https://attacker-phishing.com/login",
         "action_label": "Login"
@@ -166,7 +166,7 @@ def test_override_target_url_security():
 
     # 4. Valid relative path accepted
     res_rel = client.post("/api/overrides", headers=headers, json={
-        "site_id": "apexcare-clinic",
+        "site_id": "test-sec-apexcare",
         "intent_phrase": "opd doctors",
         "target_url": "/pages/doctors.html#doc-sharma",
         "action_label": "View Schedule"
@@ -175,7 +175,7 @@ def test_override_target_url_security():
 
     # 5. Valid anchor accepted
     res_anchor = client.post("/api/overrides", headers=headers, json={
-        "site_id": "apexcare-clinic",
+        "site_id": "test-sec-apexcare",
         "intent_phrase": "book now",
         "target_url": "#appointment",
         "action_label": "Book"
@@ -186,7 +186,7 @@ def test_input_validation():
     """Test input length bounds and regex on query parameters."""
     # Blank query
     res = client.post("/api/search", json={
-        "site_id": "apexcare-clinic",
+        "site_id": "test-sec-apexcare",
         "query": "   ",
         "top_k": 5
     })
@@ -194,7 +194,7 @@ def test_input_validation():
 
     # Query too long (> 300 chars)
     res = client.post("/api/search", json={
-        "site_id": "apexcare-clinic",
+        "site_id": "test-sec-apexcare",
         "query": "a" * 301,
         "top_k": 5
     })
@@ -210,7 +210,7 @@ def test_input_validation():
 
     # Invalid contact length
     res = client.post("/api/leads", json={
-        "site_id": "apexcare-clinic",
+        "site_id": "test-sec-apexcare",
         "query": "test",
         "visitor_contact": "x" # too short
     })
@@ -223,7 +223,7 @@ def test_rate_limiting_search():
 
     for i in range(3):
         res = client.post("/api/search", json={
-            "site_id": "apexcare-clinic",
+            "site_id": "test-sec-apexcare",
             "query": f"search query {i}",
             "top_k": 5
         })
@@ -231,7 +231,7 @@ def test_rate_limiting_search():
 
     # 4th request should exceed limit
     res_exceeded = client.post("/api/search", json={
-        "site_id": "apexcare-clinic",
+        "site_id": "test-sec-apexcare",
         "query": "search query 4",
         "top_k": 5
     })

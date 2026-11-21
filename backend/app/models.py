@@ -76,6 +76,20 @@ class OverrideRule(BaseModel):
             raise ValueError("Field cannot be empty or whitespace only")
         return cleaned
 
+class SynonymRule(BaseModel):
+    id: Optional[int] = None
+    site_id: str = Field(..., min_length=1, max_length=100, pattern=r"^[a-zA-Z0-9_\-\.]+$")
+    phrase: str = Field(..., min_length=1, max_length=150)
+    canonical: str = Field(..., min_length=1, max_length=150)
+
+    @field_validator("phrase", "canonical")
+    @classmethod
+    def strip_synonym(cls, v: str) -> str:
+        cleaned = v.strip()
+        if not cleaned:
+            raise ValueError("Synonym phrase/canonical cannot be empty")
+        return cleaned
+
 class LeadCaptureRequest(BaseModel):
     site_id: str = Field(..., min_length=1, max_length=100, pattern=r"^[a-zA-Z0-9_\-\.]+$")
     query: str = Field(..., max_length=300)

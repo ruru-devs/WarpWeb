@@ -19,7 +19,7 @@ from pydantic import BaseModel, Field
 
 from app.models import (
     SearchQuery, SearchResponse, SearchResultItem, 
-    OverrideRule, LeadCaptureRequest, SectionNode
+    OverrideRule, SynonymRule, LeadCaptureRequest, SectionNode
 )
 from app.crawler.sectionizer import HTMLSectionizer
 from app.indexer.hybrid_search import HybridIndex
@@ -63,8 +63,11 @@ def get_or_load_index(site_id: str) -> HybridIndex:
         index = HybridIndex(site_id)
         sections = db.get_sections(site_id)
         overrides = db.get_overrides(site_id)
+        synonyms = db.get_synonyms(site_id)
+        cached_embeddings = db.get_section_embeddings(site_id)
         index.set_overrides(overrides)
-        index.index_sections(sections)
+        index.set_synonyms(synonyms)
+        index.index_sections(sections, cached_embeddings=cached_embeddings, db_manager=db)
         active_indices[site_id] = index
     return active_indices[site_id]
 
@@ -234,6 +237,48 @@ async def add_override(
     # Refresh index overrides
     if rule.site_id in active_indices:
         active_indices[rule.site_id].set_overrides(db.get_overrides(rule.site_id))
+    return {"status": "success"}
+
+@app.get("/api/synonyms/{site_id}")
+async def get_site_synonyms(
+    site_id: str,
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    authorization: Optional[str] = Header(None)
+):
+    """Fetches intent aliases/synonyms for site owners (Auth protected)."""
+    require_site_auth(site_id, x_api_key, authorization)
+    return db.get_synonyms(site_id)
+
+@app.post("/api/synonyms")
+async def add_site_synonym(
+    rule: SynonymRule,
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    authorization: Optional[str] = Header(None)
+):
+    """Adds intent alias/synonym (Auth protected)."""
+    require_site_auth(rule.site_id, x_api_key, authorization)
+    site = db.get_site(rule.site_id)
+    if not site:
+        raise HTTPException(status_code=404, detail=f"Site '{rule.site_id}' not found.")
+    syn_id = db.add_synonym(rule)
+    if rule.site_id in active_indices:
+        active_indices[rule.site_id].set_synonyms(db.get_synonyms(rule.site_id))
+    return {"status": "success", "id": syn_id}
+
+@app.delete("/api/synonyms/{site_id}/{synonym_id}")
+async def delete_site_synonym(
+    site_id: str,
+    synonym_id: int,
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    authorization: Optional[str] = Header(None)
+):
+    """Deletes intent alias/synonym (Auth protected)."""
+    require_site_auth(site_id, x_api_key, authorization)
+    deleted = db.delete_synonym(site_id, synonym_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Synonym not found.")
+    if site_id in active_indices:
+        active_indices[site_id].set_synonyms(db.get_synonyms(site_id))
     return {"status": "success"}
 
 @app.get("/warpweb.js")

@@ -12,7 +12,8 @@ import json
 import time
 import hashlib
 from typing import List, Dict, Any, Optional
-from app.models import SectionNode, OverrideRule, LeadCaptureRequest
+import numpy as np
+from app.models import SectionNode, OverrideRule, LeadCaptureRequest, SynonymRule
 
 DB_PATH = "warpweb.db"
 
@@ -48,16 +49,19 @@ def init_db(db_path: str = DB_PATH):
         action_url TEXT,
         metadata_json TEXT,
         heading_path_json TEXT,
-        keywords_json TEXT
+        keywords_json TEXT,
+        embedding_blob BLOB
     )
     """)
 
-    # Check and run migration if heading_path_json / keywords_json columns are missing
+    # Check and run migration if heading_path_json / keywords_json / embedding_blob columns are missing
     section_cols = [c[1] for c in cur.execute("PRAGMA table_info(sections)").fetchall()]
     if "heading_path_json" not in section_cols:
         cur.execute("ALTER TABLE sections ADD COLUMN heading_path_json TEXT")
     if "keywords_json" not in section_cols:
         cur.execute("ALTER TABLE sections ADD COLUMN keywords_json TEXT")
+    if "embedding_blob" not in section_cols:
+        cur.execute("ALTER TABLE sections ADD COLUMN embedding_blob BLOB")
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS query_logs (
@@ -92,6 +96,44 @@ def init_db(db_path: str = DB_PATH):
         pinned INTEGER DEFAULT 1
     )
     """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS synonyms (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        site_id TEXT NOT NULL,
+        phrase TEXT NOT NULL,
+        canonical TEXT NOT NULL
+    )
+    """)
+
+    # Seed demo synonyms if table is empty
+    existing_syn_count = cur.execute("SELECT COUNT(*) FROM synonyms").fetchone()[0]
+    if existing_syn_count == 0:
+        demo_synonyms = [
+            # ApexCare Demo
+            ("apexcare-clinic", "dil ki bimari", "cardiology heart failure"),
+            ("apexcare-clinic", "dil ke doctor", "cardiologist Dr Sharma"),
+            ("apexcare-clinic", "haddi ka hospital", "orthopedics robotic spine surgery"),
+            ("apexcare-clinic", "haddi ke doctor", "orthopedic Dr Patel"),
+            ("apexcare-clinic", "charm rog", "dermatology skin clinic"),
+            ("apexcare-clinic", "charm rog vibhag", "dermatology"),
+            ("apexcare-clinic", "skin doctor", "dermatologist Dr Mehta"),
+            ("apexcare-clinic", "ambulance bulana hai", "ambulance trauma emergency"),
+            ("apexcare-clinic", "emergency number", "trauma ambulance emergency 24/7"),
+            ("apexcare-clinic", "urgent care", "emergency trauma"),
+            ("apexcare-clinic", "knee replacement", "orthopedics joint reconstruction"),
+            # PulseTech Demo
+            ("shoppulse-commerce", "earbuds ka backup", "battery life earbuds playback"),
+            ("shoppulse-commerce", "battery backup", "battery life playback"),
+            ("shoppulse-commerce", "paise wapas", "30-day money-back guarantee return policy"),
+            ("shoppulse-commerce", "paani me", "IPX7 waterproof sweatproof earbuds"),
+            ("shoppulse-commerce", "halka headphone", "lightweight commuter headphone"),
+            ("shoppulse-commerce", "sabse accha", "flagship reference"),
+            ("shoppulse-commerce", "warranty claim", "2-year manufacturer warranty terms"),
+            ("shoppulse-commerce", "delivery kitne din", "express shipping delivery timelines"),
+            ("shoppulse-commerce", "running", "gym workout IPX7 sweatproof")
+        ]
+        cur.executemany("INSERT INTO synonyms (site_id, phrase, canonical) VALUES (?, ?, ?)", demo_synonyms)
 
     # Seed demo keys if sites exist without api_key_hash
     demo_keys = {
@@ -235,6 +277,53 @@ class DatabaseManager:
             INSERT INTO overrides (site_id, intent_phrase, target_url, action_label, pinned)
             VALUES (?, ?, ?, ?, ?)
             """, (rule.site_id, rule.intent_phrase, rule.target_url, rule.action_label, 1 if rule.pinned else 0))
+
+    def save_section_embeddings(self, site_id: str, embeddings: Dict[str, np.ndarray]):
+        with self._get_conn() as conn:
+            for sec_id, emb in embeddings.items():
+                blob = emb.astype(np.float32).tobytes()
+                conn.execute(
+                    "UPDATE sections SET embedding_blob = ? WHERE id = ? AND site_id = ?",
+                    (blob, sec_id, site_id)
+                )
+
+    def get_section_embeddings(self, site_id: str) -> Dict[str, np.ndarray]:
+        with self._get_conn() as conn:
+            rows = conn.execute(
+                "SELECT id, embedding_blob FROM sections WHERE site_id = ? AND embedding_blob IS NOT NULL",
+                (site_id,)
+            ).fetchall()
+            result = {}
+            for r in rows:
+                if r["embedding_blob"]:
+                    result[r["id"]] = np.frombuffer(r["embedding_blob"], dtype=np.float32)
+            return result
+
+    def get_synonyms(self, site_id: str) -> List[SynonymRule]:
+        with self._get_conn() as conn:
+            rows = conn.execute("SELECT * FROM synonyms WHERE site_id = ?", (site_id,)).fetchall()
+            return [
+                SynonymRule(
+                    id=r["id"],
+                    site_id=r["site_id"],
+                    phrase=r["phrase"],
+                    canonical=r["canonical"]
+                )
+                for r in rows
+            ]
+
+    def add_synonym(self, rule: SynonymRule) -> int:
+        with self._get_conn() as conn:
+            cur = conn.execute(
+                "INSERT INTO synonyms (site_id, phrase, canonical) VALUES (?, ?, ?)",
+                (rule.site_id, rule.phrase, rule.canonical)
+            )
+            return cur.lastrowid
+
+    def delete_synonym(self, site_id: str, synonym_id: int) -> bool:
+        with self._get_conn() as conn:
+            cur = conn.execute("DELETE FROM synonyms WHERE site_id = ? AND id = ?", (site_id, synonym_id))
+            return cur.rowcount > 0
 
     def get_analytics(self, site_id: str) -> Dict[str, Any]:
         with self._get_conn() as conn:
