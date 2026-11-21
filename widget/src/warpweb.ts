@@ -1,117 +1,117 @@
 /**
- * WarpWeb Embeddable Widget (<15KB standalone)
- * Injected on client websites via:
- * <script src="http://localhost:8000/warpweb.js" data-site-id="xyz" data-api-host="http://localhost:8000"></script>
- *
- * Supports:
- * 1. Same-page smooth scroll + pulse highlight
- * 2. Cross-page deep navigation with auto-highlighting upon page landing
- * 3. Sub-150ms instant search palette (Ctrl+K or floating badge)
- * 4. Fallback lead capture for zero matches
+ * WarpWeb Client Widget
+ * Shadow-DOM isolated command palette with deep semantic intent matching,
+ * in-flight request cancellation (AbortController), ARIA accessibility (combobox/listbox),
+ * focus trap, mobile responsiveness, click-through tracking, and result feedback.
  */
-
 (function () {
-  const currentScript = document.currentScript as HTMLScriptElement;
-  const siteId = (currentScript && currentScript.getAttribute('data-site-id')) || 'apexcare-clinic';
-  const apiHost = (currentScript && currentScript.getAttribute('data-api-host')) || 'http://localhost:8000';
+  if (window.__warpweb_initialized) return;
+  window.__warpweb_initialized = true;
 
-  // Highlight style injected into parent window
-  if (!document.getElementById('warpweb-highlighter-style')) {
-    const hlStyle = document.createElement('style');
-    hlStyle.id = 'warpweb-highlighter-style';
-    hlStyle.textContent = `
-      @keyframes warpwebPulse {
-        0% { outline: 4px solid #38bdf8; background-color: rgba(56, 189, 248, 0.28); }
-        50% { outline: 6px solid #0284c7; background-color: rgba(2, 132, 199, 0.38); }
-        100% { outline: 4px solid transparent; background-color: transparent; }
-      }
-      .warpweb-highlight-target {
-        animation: warpwebPulse 3s cubic-bezier(0.16, 1, 0.3, 1);
-        scroll-margin-top: 90px;
-        border-radius: 8px;
-      }
-    `;
-    document.head.appendChild(hlStyle);
-  }
+  // Retrieve current script tags configuration
+  const scriptTag = document.currentScript as HTMLScriptElement || 
+    document.querySelector('script[data-site-id]');
+  
+  const siteId = scriptTag?.getAttribute('data-site-id') || 'apexcare-clinic';
+  const apiHost = scriptTag?.getAttribute('data-api-host') || 'http://localhost:8000';
 
-  // Check URL hash or search params on page load for auto-highlighting after cross-page navigation
-  function checkLandingHighlight() {
-    const hash = window.location.hash ? window.location.hash.substring(1) : '';
-    const params = new URLSearchParams(window.location.search);
-    const highlightTarget = hash || params.get('warpweb_highlight');
-
-    if (highlightTarget) {
-      setTimeout(() => {
-        const el = document.getElementById(highlightTarget);
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          el.classList.remove('warpweb-highlight-target');
-          void el.offsetWidth;
-          el.classList.add('warpweb-highlight-target');
-        }
-      }, 250);
+  // Inject target pulse-highlight CSS into main host document
+  const pulseStyle = document.createElement('style');
+  pulseStyle.textContent = `
+    @keyframes warpweb-target-pulse {
+      0% { outline: 3px solid #0284c7; background-color: rgba(2, 132, 199, 0.2); }
+      50% { outline: 3px solid #38bdf8; background-color: rgba(56, 189, 248, 0.35); }
+      100% { outline: 3px solid transparent; background-color: transparent; }
     }
+    .warpweb-highlight-target {
+      animation: warpweb-target-pulse 2.5s ease-out 1;
+      border-radius: 6px;
+    }
+  `;
+  document.head.appendChild(pulseStyle);
+
+  // Check URL on page load for deep anchor pulse highlight
+  window.addEventListener('DOMContentLoaded', () => {
+    checkAndHighlightAnchor();
+  });
+
+  function checkAndHighlightAnchor() {
+    const hash = window.location.hash.replace('#', '');
+    if (!hash) return;
+    setTimeout(() => {
+      const target = document.getElementById(hash);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        target.classList.add('warpweb-highlight-target');
+      }
+    }, 250);
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', checkLandingHighlight);
-  } else {
-    checkLandingHighlight();
-  }
+  // Create Isolated Shadow Root container
+  const host = document.createElement('div');
+  host.id = 'warpweb-widget-host';
+  document.body.appendChild(host);
+  const shadow = host.attachShadow({ mode: 'open' });
 
-  // Prevent multiple mountings
-  if (document.getElementById('warpweb-root')) return;
-
-  const container = document.createElement('div');
-  container.id = 'warpweb-root';
-  const shadow = container.attachShadow({ mode: 'open' });
-  document.body.appendChild(container);
-
-  // Styles isolated in Shadow DOM
+  // Stylesheet
   const style = document.createElement('style');
   style.textContent = `
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-    .warpweb-btn {
+    :host {
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --bg: #ffffff;
+      --border: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    .warpweb-trigger-btn {
       position: fixed;
       bottom: 24px;
       right: 24px;
+      z-index: 2147483640;
       display: flex;
       align-items: center;
       gap: 8px;
       background: #0f172a;
       color: #ffffff;
-      padding: 10px 18px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 9999px;
-      cursor: pointer;
-      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.35);
-      border: 1px solid #334155;
-      z-index: 999999;
+      padding: 10px 18px;
       font-size: 14px;
       font-weight: 500;
+      cursor: pointer;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
       transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .warpweb-btn:hover {
+    .warpweb-trigger-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 14px 28px -5px rgba(0,0,0,0.45);
+      box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.4);
       background: #1e293b;
     }
     .warpweb-badge {
+      font-size: 11px;
       background: #334155;
       padding: 2px 6px;
       border-radius: 4px;
-      font-size: 11px;
       color: #94a3b8;
+      font-weight: 600;
     }
     .warpweb-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.65);
-      backdrop-filter: blur(5px);
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(4px);
+      z-index: 2147483647;
       display: flex;
       justify-content: center;
       align-items: flex-start;
       padding-top: 10vh;
-      z-index: 1000000;
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.2s ease;
@@ -121,39 +121,39 @@
       pointer-events: auto;
     }
     .warpweb-modal {
-      width: 100%;
-      max-width: 650px;
+      width: 640px;
+      max-width: 95vw;
       background: #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4);
+      border-radius: 14px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
       border: 1px solid #e2e8f0;
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      animation: warpweb-pop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    @keyframes slideDown {
-      from { transform: translateY(-12px) scale(0.98); }
-      to { transform: translateY(0) scale(1); }
+    @keyframes warpweb-pop {
+      from { transform: scale(0.96) translateY(-8px); opacity: 0; }
+      to { transform: scale(1) translateY(0); opacity: 1; }
     }
     .warpweb-search-bar {
       display: flex;
       align-items: center;
       padding: 16px 20px;
-      border-bottom: 1px solid #f1f5f9;
+      border-bottom: 1px solid #e2e8f0;
       gap: 12px;
     }
     .warpweb-icon {
-      color: #64748b;
       width: 20px;
       height: 20px;
+      color: #94a3b8;
       flex-shrink: 0;
     }
     .warpweb-input {
       flex: 1;
       border: none;
       outline: none;
-      font-size: 17px;
+      font-size: 16px;
       color: #0f172a;
       background: transparent;
     }
@@ -161,7 +161,7 @@
       color: #94a3b8;
     }
     .warpweb-results {
-      max-height: 400px;
+      max-height: 420px;
       overflow-y: auto;
       padding: 12px;
       display: flex;
@@ -181,9 +181,10 @@
       border: 1px solid #f1f5f9;
       transition: all 0.15s ease;
     }
-    .warpweb-item:hover, .warpweb-item.active {
-      background: #f8fafc;
-      border-color: #cbd5e1;
+    .warpweb-item:hover, .warpweb-item.active, .warpweb-item:focus {
+      background: #f0f9ff;
+      border-color: #38bdf8;
+      outline: none;
       transform: translateX(2px);
     }
     .warpweb-item-main {
@@ -276,54 +277,112 @@
       font-weight: 500;
     }
     .warpweb-empty {
-      padding: 28px 16px;
+      padding: 24px 16px;
       text-align: center;
       color: #64748b;
     }
     .warpweb-lead-box {
       margin-top: 14px;
       padding: 16px;
-      background: #f8fafc;
       border-radius: 10px;
+      background: #f8fafc;
       border: 1px dashed #cbd5e1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
       text-align: left;
     }
     .warpweb-lead-input {
-      width: 100%;
-      padding: 9px 12px;
+      padding: 10px 14px;
       border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      font-size: 13px;
-      margin-top: 8px;
+      border-radius: 8px;
+      font-size: 14px;
       outline: none;
+      width: 100%;
+    }
+    .warpweb-lead-input:focus {
+      border-color: #0284c7;
     }
     .warpweb-lead-submit {
-      margin-top: 8px;
       background: #0f172a;
       color: #ffffff;
       border: none;
-      padding: 8px 14px;
-      border-radius: 6px;
+      padding: 10px 16px;
+      border-radius: 8px;
       font-size: 13px;
       font-weight: 500;
       cursor: pointer;
+      align-self: flex-start;
     }
     .warpweb-footer {
-      padding: 10px 18px;
-      border-top: 1px solid #f1f5f9;
+      padding: 10px 16px;
+      background: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+      font-size: 11.5px;
+      color: #64748b;
       display: flex;
       justify-content: space-between;
       align-items: center;
+    }
+    .warpweb-feedback-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       font-size: 12px;
-      color: #94a3b8;
-      background: #fafafa;
+      color: #64748b;
+    }
+    .warpweb-feedback-btn {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .warpweb-feedback-btn:hover {
+      background: #e2e8f0;
+    }
+    @media (max-width: 640px) {
+      .warpweb-backdrop {
+        padding-top: 0;
+        align-items: flex-end;
+      }
+      .warpweb-modal {
+        width: 100vw;
+        max-width: 100vw;
+        max-height: 85vh;
+        border-radius: 16px 16px 0 0;
+      }
+      .warpweb-search-bar {
+        padding: 14px 16px;
+      }
+      .warpweb-input {
+        font-size: 16px;
+      }
+      .warpweb-results {
+        max-height: 55vh;
+      }
+      .warpweb-trigger-btn {
+        bottom: 16px;
+        right: 16px;
+        padding: 8px 14px;
+        font-size: 13px;
+      }
+      .warpweb-actions-container {
+        justify-content: flex-start;
+        margin-top: 6px;
+      }
     }
   `;
   shadow.appendChild(style);
 
-  // Floating Trigger Button
+  // Floating trigger button
   const btn = document.createElement('button');
-  btn.className = 'warpweb-btn';
+  btn.className = 'warpweb-trigger-btn';
+  btn.setAttribute('aria-haspopup', 'dialog');
+  btn.setAttribute('aria-expanded', 'false');
+  btn.setAttribute('aria-label', 'Open WarpWeb site search dialog');
   btn.innerHTML = `
     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
       <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -333,22 +392,34 @@
   `;
   shadow.appendChild(btn);
 
-  // Modal
+  // Modal dialog
   const backdrop = document.createElement('div');
   backdrop.className = 'warpweb-backdrop';
+  backdrop.setAttribute('role', 'dialog');
+  backdrop.setAttribute('aria-modal', 'true');
+  backdrop.setAttribute('aria-label', 'Search website intents and pages');
+
   backdrop.innerHTML = `
     <div class="warpweb-modal">
       <div class="warpweb-search-bar">
         <svg class="warpweb-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
         </svg>
-        <input type="text" class="warpweb-input" placeholder="Type intent (e.g. 'return policy', 'dr sharma timings', 'noise cancelling headphones')..." />
+        <input type="text" class="warpweb-input" 
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded="false"
+          aria-controls="warpweb-results-list"
+          aria-activedescendant=""
+          placeholder="Type intent (e.g. 'return policy', 'dr sharma timings', 'noise cancelling headphones')..." />
         <span class="warpweb-badge">ESC</span>
       </div>
-      <div class="warpweb-results"></div>
+      <div class="warpweb-results" id="warpweb-results-list" role="listbox" aria-label="Search suggestions"></div>
       <div class="warpweb-footer">
         <span>⚡ <strong>WarpWeb</strong> Cross-Page Intent Engine</span>
-        <span>Instant jump & deep highlight</span>
+        <div id="warpweb-footer-extra">
+          <span style="font-size: 11px; color: #94a3b8;">↑↓ Navigate • Enter Select • Esc Close</span>
+        </div>
       </div>
     </div>
   `;
@@ -357,8 +428,21 @@
   const input = backdrop.querySelector('.warpweb-input') as HTMLInputElement;
   const resultsBox = backdrop.querySelector('.warpweb-results') as HTMLDivElement;
 
+  // Accessibility & Navigation State
+  let previousActiveElement: HTMLElement | null = null;
+  let activeIndex = -1;
+  let resultItemsElements: HTMLElement[] = [];
+  let cachedSuggestions: Array<{ label: string; query: string }> = [];
+
+  // In-flight request sequencing & cancellation
+  let activeAbortController: AbortController | null = null;
+  let latestRequestId = 0;
+
   function openModal() {
+    previousActiveElement = document.activeElement as HTMLElement;
     backdrop.classList.add('open');
+    btn.setAttribute('aria-expanded', 'true');
+    input.setAttribute('aria-expanded', 'true');
     input.focus();
     if (!input.value.trim()) {
       renderWelcomeSuggestions();
@@ -367,6 +451,17 @@
 
   function closeModal() {
     backdrop.classList.remove('open');
+    btn.setAttribute('aria-expanded', 'false');
+    input.setAttribute('aria-expanded', 'false');
+    input.setAttribute('aria-activedescendant', '');
+    activeIndex = -1;
+    if (activeAbortController) {
+      activeAbortController.abort();
+      activeAbortController = null;
+    }
+    if (previousActiveElement && typeof previousActiveElement.focus === 'function') {
+      previousActiveElement.focus();
+    }
   }
 
   btn.addEventListener('click', openModal);
@@ -374,14 +469,50 @@
     if (e.target === backdrop) closeModal();
   });
 
+  // Global Keyboard Shortcuts & Modal Focus Trap
   window.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault();
       backdrop.classList.contains('open') ? closeModal() : openModal();
     }
-    if (e.key === 'Escape') closeModal();
+    if (e.key === 'Escape' && backdrop.classList.contains('open')) {
+      closeModal();
+    }
   });
 
+  // Keyboard navigation within search input (ArrowUp, ArrowDown, Enter)
+  input.addEventListener('keydown', (e) => {
+    if (!resultItemsElements.length) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      activeIndex = (activeIndex + 1) % resultItemsElements.length;
+      updateActiveItem();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      activeIndex = (activeIndex - 1 + resultItemsElements.length) % resultItemsElements.length;
+      updateActiveItem();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (activeIndex >= 0 && activeIndex < resultItemsElements.length) {
+        resultItemsElements[activeIndex].click();
+      }
+    }
+  });
+
+  function updateActiveItem() {
+    resultItemsElements.forEach((el, idx) => {
+      if (idx === activeIndex) {
+        el.classList.add('active');
+        input.setAttribute('aria-activedescendant', el.id);
+        el.scrollIntoView({ block: 'nearest' });
+      } else {
+        el.classList.remove('active');
+      }
+    });
+  }
+
+  // Debounced Search Input
   let debounceTimer: any = null;
   input.addEventListener('input', () => {
     clearTimeout(debounceTimer);
@@ -390,18 +521,65 @@
     }, 100);
   });
 
+  // Dynamic Suggestions from Backend
+  async function loadDynamicSuggestions() {
+    try {
+      const res = await fetch(`${apiHost}/api/suggestions/${siteId}`);
+      if (res.ok) {
+        const data = await res.json();
+        cachedSuggestions = data.suggestions || [];
+      }
+    } catch (e) {
+      cachedSuggestions = [];
+    }
+  }
+  loadDynamicSuggestions();
+
   function renderWelcomeSuggestions() {
-    resultsBox.innerHTML = `
-      <div style="padding: 12px; font-size: 13px; color: #64748b;">
-        <span style="font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; color: #94a3b8;">Suggested cross-page intents</span>
-        <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
-          <button class="warpweb-item" style="padding: 6px 12px; font-size: 13px;" onclick="window.__warpwebQuick('timings')">🕒 Doctor Timings</button>
-          <button class="warpweb-item" style="padding: 6px 12px; font-size: 13px;" onclick="window.__warpwebQuick('mri scan price')">💰 MRI Scan Price</button>
-          <button class="warpweb-item" style="padding: 6px 12px; font-size: 13px;" onclick="window.__warpwebQuick('return policy')">📦 30-Day Returns</button>
-          <button class="warpweb-item" style="padding: 6px 12px; font-size: 13px;" onclick="window.__warpwebQuick('wireless headphones anc')">🎧 Active Noise Cancelling</button>
-        </div>
-      </div>
-    `;
+    resultsBox.innerHTML = '';
+    resultItemsElements = [];
+    activeIndex = -1;
+
+    const wrap = document.createElement('div');
+    wrap.style.padding = '14px';
+
+    const header = document.createElement('span');
+    header.style.fontWeight = '600';
+    header.style.textTransform = 'uppercase';
+    header.style.fontSize = '11px';
+    header.style.letterSpacing = '0.05em';
+    header.style.color = '#94a3b8';
+    header.textContent = 'Suggested cross-page intents';
+    wrap.appendChild(header);
+
+    const container = document.createElement('div');
+    container.style.display = 'flex';
+    container.style.gap = '8px';
+    container.style.marginTop = '10px';
+    container.style.flexWrap = 'wrap';
+
+    const suggestions = (cachedSuggestions && cachedSuggestions.length) ? cachedSuggestions : [
+      { label: 'Doctor Timings & OPD', query: 'timings' },
+      { label: 'MRI Scan Pricing', query: 'mri scan price' },
+      { label: '30-Day Return Policy', query: 'return policy' },
+      { label: 'Active Noise Cancelling', query: 'wireless headphones anc' }
+    ];
+
+    suggestions.forEach((s) => {
+      const btnItem = document.createElement('button');
+      btnItem.className = 'warpweb-item';
+      btnItem.style.padding = '6px 12px';
+      btnItem.style.fontSize = '13px';
+      btnItem.textContent = s.label;
+      btnItem.addEventListener('click', () => {
+        input.value = s.query;
+        fetchResults(s.query);
+      });
+      container.appendChild(btnItem);
+    });
+
+    wrap.appendChild(container);
+    resultsBox.appendChild(wrap);
   }
 
   async function fetchResults(query: string) {
@@ -410,33 +588,50 @@
       return;
     }
 
+    // Cancel in-flight request
+    if (activeAbortController) {
+      activeAbortController.abort();
+    }
+    activeAbortController = new AbortController();
+    const currentRequestId = ++latestRequestId;
+
     try {
       const res = await fetch(`${apiHost}/api/search`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ site_id: siteId, query: query, top_k: 5 })
+        body: JSON.stringify({ site_id: siteId, query: query, top_k: 5 }),
+        signal: activeAbortController.signal
       });
+
+      // Ignore stale response if a newer query was issued
+      if (currentRequestId !== latestRequestId) return;
+
       const data = await res.json();
       renderResults(data, query);
-    } catch (err) {
+    } catch (err: any) {
+      if (err.name === 'AbortError') return;
       console.error('WarpWeb search failed:', err);
     }
   }
 
   function renderResults(data: any, query: string) {
     resultsBox.innerHTML = '';
+    resultItemsElements = [];
+    activeIndex = -1;
+
     if (!data.results || data.results.length === 0) {
       const emptyDiv = document.createElement('div');
       emptyDiv.className = 'warpweb-empty';
 
       const pMsg = document.createElement('p');
-      pMsg.textContent = 'No exact match found across the website for "';
+      pMsg.textContent = 'No match found across website for "';
       const strongQuery = document.createElement('strong');
       strongQuery.textContent = query;
       pMsg.appendChild(strongQuery);
       pMsg.appendChild(document.createTextNode('".'));
       emptyDiv.appendChild(pMsg);
 
+      // Lead capture fallback
       const leadBox = document.createElement('div');
       leadBox.className = 'warpweb-lead-box';
 
@@ -449,24 +644,28 @@
       const leadDesc = document.createElement('p');
       leadDesc.style.fontSize = '12px';
       leadDesc.style.color = '#64748b';
-      leadDesc.style.margin = '4px 0';
       leadDesc.textContent = 'Leave your WhatsApp or phone number and our team will get back to you with the answer:';
       leadBox.appendChild(leadDesc);
 
       const leadInput = document.createElement('input');
       leadInput.type = 'text';
-      leadInput.id = 'warpweb-lead-input';
       leadInput.className = 'warpweb-lead-input';
       leadInput.placeholder = 'Phone or WhatsApp number...';
       leadBox.appendChild(leadInput);
 
       const leadSubmit = document.createElement('button');
-      leadSubmit.id = 'warpweb-lead-submit';
       leadSubmit.className = 'warpweb-lead-submit';
       leadSubmit.textContent = 'Request Instant Callback';
       leadBox.appendChild(leadSubmit);
 
       emptyDiv.appendChild(leadBox);
+
+      // Feedback on zero result
+      const fbBox = createFeedbackWidget(query);
+      fbBox.style.marginTop = '16px';
+      fbBox.style.justifyContent = 'center';
+      emptyDiv.appendChild(fbBox);
+
       resultsBox.appendChild(emptyDiv);
 
       leadSubmit.addEventListener('click', async () => {
@@ -488,7 +687,6 @@
             const pSuccess = document.createElement('p');
             pSuccess.style.marginTop = '8px';
             pSuccess.style.fontWeight = '600';
-            pSuccess.style.color = '#0f172a';
             pSuccess.textContent = 'Request logged!';
             const pDetail = document.createElement('p');
             pDetail.style.fontSize = '13px';
@@ -508,11 +706,13 @@
 
     const currentPath = window.location.pathname;
 
-    data.results.forEach((item: any) => {
+    data.results.forEach((item: any, rankIdx: number) => {
       const el = document.createElement('div');
       el.className = 'warpweb-item';
+      el.id = `warpweb-item-${rankIdx}`;
+      el.setAttribute('role', 'option');
+      el.setAttribute('tabindex', '-1');
 
-      // Determine if destination is on current page or another page
       let targetPath = '';
       try {
         const u = new URL(item.target_url, window.location.href);
@@ -523,7 +723,6 @@
 
       const isCurrentPage = targetPath === currentPath || targetPath.endsWith(currentPath.split('/').pop() || '');
 
-      // Readable breadcrumbs / page tag
       let pageLabel = 'Page';
       const uStr = String(item.url || '');
       if (uStr.includes('doctors')) pageLabel = 'Doctors & OPD';
@@ -533,7 +732,6 @@
       else if (uStr.includes('policy')) pageLabel = 'Shipping & Policies';
       else if (uStr.includes('specs')) pageLabel = 'Tech Specs';
 
-      // Safe DOM construction (No unsanitized innerHTML interpolation)
       const mainDiv = document.createElement('div');
       mainDiv.className = 'warpweb-item-main';
 
@@ -550,7 +748,7 @@
       const navBadge = document.createElement('span');
       if (!isCurrentPage) {
         navBadge.className = 'warpweb-cross-page-badge';
-        navBadge.textContent = 'Cross-page navigation';
+        navBadge.textContent = 'Cross-page';
       } else {
         navBadge.textContent = 'Current page';
       }
@@ -569,6 +767,11 @@
         tag.style.background = '#fef3c7';
         tag.style.color = '#b45309';
         tag.textContent = 'Verified';
+        titleDiv.appendChild(tag);
+      } else if (item.match_type === 'hybrid') {
+        const tag = document.createElement('span');
+        tag.className = 'warpweb-tag';
+        tag.textContent = 'High Confidence';
         titleDiv.appendChild(tag);
       }
       mainDiv.appendChild(titleDiv);
@@ -598,6 +801,7 @@
 
       el.appendChild(mainDiv);
 
+      // Render Multiple Actions
       const actionsContainer = document.createElement('div');
       actionsContainer.className = 'warpweb-actions-container';
 
@@ -610,6 +814,8 @@
       actionsList.forEach((act: any, aIdx: number) => {
         const actionBadge = document.createElement('div');
         actionBadge.className = `warpweb-action-badge ${aIdx > 0 ? 'warpweb-action-secondary' : ''}`;
+        actionBadge.setAttribute('role', 'button');
+        actionBadge.setAttribute('tabindex', '0');
         const actionText = document.createElement('span');
         actionText.textContent = act.label;
         actionBadge.appendChild(actionText);
@@ -628,6 +834,7 @@
 
         actionBadge.addEventListener('click', (e) => {
           e.stopPropagation();
+          trackClick(data.query_id, query, item.id, rankIdx + 1, act.url);
           closeModal();
           navigateToUrl(act.url);
         });
@@ -638,12 +845,77 @@
       el.appendChild(actionsContainer);
 
       el.addEventListener('click', () => {
+        trackClick(data.query_id, query, item.id, rankIdx + 1, item.target_url);
         closeModal();
         handleCrossPageNavigation(item, isCurrentPage);
       });
 
+      resultItemsElements.push(el);
       resultsBox.appendChild(el);
     });
+
+    // Feedback row at bottom of results
+    const footerFeedback = document.createElement('div');
+    footerFeedback.style.padding = '8px 14px';
+    footerFeedback.style.display = 'flex';
+    footerFeedback.style.justifyContent = 'flex-end';
+    footerFeedback.appendChild(createFeedbackWidget(query));
+    resultsBox.appendChild(footerFeedback);
+  }
+
+  function createFeedbackWidget(query: string): HTMLElement {
+    const box = document.createElement('div');
+    box.className = 'warpweb-feedback-box';
+
+    const lbl = document.createElement('span');
+    lbl.textContent = 'Was this helpful?';
+    box.appendChild(lbl);
+
+    const yesBtn = document.createElement('button');
+    yesBtn.className = 'warpweb-feedback-btn';
+    yesBtn.textContent = '👍 Yes';
+    yesBtn.onclick = () => sendFeedback(query, true, box);
+    box.appendChild(yesBtn);
+
+    const noBtn = document.createElement('button');
+    noBtn.className = 'warpweb-feedback-btn';
+    noBtn.textContent = '👎 No';
+    noBtn.onclick = () => sendFeedback(query, false, box);
+    box.appendChild(noBtn);
+
+    return box;
+  }
+
+  function sendFeedback(query: string, isPositive: boolean, container: HTMLElement) {
+    try {
+      fetch(`${apiHost}/api/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ site_id: siteId, query: query, is_positive: isPositive })
+      });
+      container.innerHTML = '<span style="color: #059669; font-weight: 500;">Thank you for your feedback!</span>';
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  function trackClick(queryId: any, query: string, resultId: string, rank: number, targetUrl: string) {
+    try {
+      fetch(`${apiHost}/api/clicks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          site_id: siteId,
+          query_id: queryId || null,
+          query: query,
+          result_id: resultId,
+          rank: rank,
+          target_url: targetUrl
+        })
+      });
+    } catch (e) {
+      // Non-blocking telemetry
+    }
   }
 
   function navigateToUrl(destinationUrl: string) {
@@ -661,7 +933,6 @@
 
   function handleCrossPageNavigation(item: any, isCurrentPage: boolean) {
     if (isCurrentPage && item.anchor_id) {
-      // Same-page smooth scroll + pulse highlight
       const targetElem = document.getElementById(item.anchor_id);
       if (targetElem) {
         targetElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -672,7 +943,6 @@
       }
     }
 
-    // Cross-page navigation: ensure anchor or highlight param is carried over
     let destinationUrl = item.target_url || '';
     if (item.anchor_id && !destinationUrl.includes('#')) {
       destinationUrl += `#${item.anchor_id}`;

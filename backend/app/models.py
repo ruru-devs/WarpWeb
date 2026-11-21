@@ -58,11 +58,25 @@ class SearchResultItem(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 class SearchResponse(BaseModel):
+    query_id: Optional[int] = None
     query: str
     results: List[SearchResultItem]
     latency_ms: float
     zero_match: bool = False
     suggested_quick_actions: List[Dict[str, str]] = Field(default_factory=list)
+
+class ClickEventRequest(BaseModel):
+    site_id: str = Field(..., min_length=1, max_length=100, pattern=r"^[a-zA-Z0-9_\-\.]+$")
+    query_id: Optional[int] = None
+    query: Optional[str] = Field(None, max_length=300)
+    result_id: str = Field(..., max_length=150)
+    rank: int = Field(1, ge=1, le=50)
+    target_url: str = Field(..., max_length=1000)
+
+class FeedbackRequest(BaseModel):
+    site_id: str = Field(..., min_length=1, max_length=100, pattern=r"^[a-zA-Z0-9_\-\.]+$")
+    query: Optional[str] = Field(None, max_length=300)
+    is_positive: bool
 
 class OverrideRule(BaseModel):
     site_id: str = Field(..., min_length=1, max_length=100, pattern=r"^[a-zA-Z0-9_\-\.]+$")

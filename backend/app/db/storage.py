@@ -94,6 +94,29 @@ def init_db(db_path: str = DB_PATH):
     """)
 
     cur.execute("""
+    CREATE TABLE IF NOT EXISTS click_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        site_id TEXT NOT NULL,
+        query_id INTEGER,
+        query TEXT,
+        result_id TEXT NOT NULL,
+        rank INTEGER NOT NULL,
+        target_url TEXT NOT NULL,
+        timestamp REAL
+    )
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS search_feedback (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        site_id TEXT NOT NULL,
+        query TEXT,
+        is_positive INTEGER NOT NULL,
+        timestamp REAL
+    )
+    """)
+
+    cur.execute("""
     CREATE TABLE IF NOT EXISTS leads (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         site_id TEXT NOT NULL,
@@ -271,13 +294,38 @@ class DatabaseManager:
                 ))
             return sections
 
-    def log_query(self, site_id: str, query: str, results_count: int, latency_ms: float):
+    def log_query(self, site_id: str, query: str, results_count: int, latency_ms: float) -> int:
         is_zero = 1 if results_count == 0 else 0
         with self._get_conn() as conn:
-            conn.execute("""
+            cur = conn.execute("""
             INSERT INTO query_logs (site_id, query, results_count, is_zero_match, latency_ms, timestamp)
             VALUES (?, ?, ?, ?, ?, ?)
             """, (site_id, query, results_count, is_zero, latency_ms, time.time()))
+            return cur.lastrowid
+
+    def log_click(
+        self,
+        site_id: str,
+        result_id: str,
+        rank: int,
+        target_url: str,
+        query_id: Optional[int] = None,
+        query: Optional[str] = None
+    ) -> int:
+        with self._get_conn() as conn:
+            cur = conn.execute("""
+            INSERT INTO click_events (site_id, query_id, query, result_id, rank, target_url, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (site_id, query_id, query, result_id, rank, target_url, time.time()))
+            return cur.lastrowid
+
+    def save_feedback(self, site_id: str, is_positive: bool, query: Optional[str] = None) -> int:
+        with self._get_conn() as conn:
+            cur = conn.execute("""
+            INSERT INTO search_feedback (site_id, query, is_positive, timestamp)
+            VALUES (?, ?, ?, ?)
+            """, (site_id, query, 1 if is_positive else 0, time.time()))
+            return cur.lastrowid
 
     def save_lead(self, lead: LeadCaptureRequest):
         with self._get_conn() as conn:
@@ -428,10 +476,20 @@ class DatabaseManager:
 
             findability_rate = round(((total_queries - zero_matches) / total_queries * 100), 1) if total_queries > 0 else 100.0
 
+            total_clicks = conn.execute("SELECT COUNT(*) FROM click_events WHERE site_id = ?", (site_id,)).fetchone()[0]
+            ctr = round((total_clicks / total_queries * 100), 1) if total_queries > 0 else 0.0
+
+            pos_feedback = conn.execute("SELECT COUNT(*) FROM search_feedback WHERE site_id = ? AND is_positive = 1", (site_id,)).fetchone()[0]
+            neg_feedback = conn.execute("SELECT COUNT(*) FROM search_feedback WHERE site_id = ? AND is_positive = 0", (site_id,)).fetchone()[0]
+
             return {
                 "total_queries": total_queries,
                 "zero_matches": zero_matches,
                 "findability_rate": findability_rate,
+                "total_clicks": total_clicks,
+                "click_through_rate": ctr,
+                "positive_feedback": pos_feedback,
+                "negative_feedback": neg_feedback,
                 "top_queries": top_queries,
                 "lost_queries": lost_queries,
                 "recent_leads": leads

@@ -19,7 +19,8 @@ from pydantic import BaseModel, Field
 
 from app.models import (
     SearchQuery, SearchResponse, SearchResultItem, 
-    OverrideRule, SynonymRule, LeadCaptureRequest, SectionNode
+    OverrideRule, SynonymRule, LeadCaptureRequest, SectionNode,
+    ClickEventRequest, FeedbackRequest
 )
 from app.crawler.sectionizer import HTMLSectionizer
 from app.crawler.live_crawler import LiveCrawler
@@ -166,8 +167,8 @@ async def search_intent(req: SearchQuery, request: Request):
     latency_ms = round((time.time() - t0) * 1000, 2)
 
     is_zero = len(results) == 0
-    # Log query event for the Findability Report
-    db.log_query(req.site_id, req.query, len(results), latency_ms)
+    # Log query event for the Findability Report & CTR
+    query_id = db.log_query(req.site_id, req.query, len(results), latency_ms)
 
     quick_actions = [
         {"label": "Book Appointment", "url": "#book"},
@@ -176,6 +177,7 @@ async def search_intent(req: SearchQuery, request: Request):
     ]
 
     return SearchResponse(
+        query_id=query_id,
         query=req.query,
         results=results,
         latency_ms=latency_ms,
@@ -207,6 +209,66 @@ async def capture_lead(lead: LeadCaptureRequest, request: Request):
 
     db.save_lead(lead)
     return {"status": "success", "message": "Lead received"}
+
+@app.get("/api/suggestions/{site_id}")
+async def get_site_suggestions(site_id: str, request: Request):
+    """Returns dynamic suggestions for the search widget modal."""
+    site = db.get_site(site_id)
+    if not site:
+        raise HTTPException(status_code=404, detail=f"Site '{site_id}' not found.")
+
+    validate_public_origin(request, site["domain"])
+
+    sections = db.get_sections(site_id)
+    suggestions = []
+    seen_titles = set()
+    for s in sections:
+        if s.title and s.title not in seen_titles and len(s.title) < 50:
+            suggestions.append({
+                "label": s.title,
+                "query": s.title
+            })
+            seen_titles.add(s.title)
+        if len(suggestions) >= 6:
+            break
+
+    if not suggestions:
+        suggestions = [{"label": f"Explore {site['name']}", "query": site["name"]}]
+
+    return {"site_id": site_id, "suggestions": suggestions}
+
+@app.post("/api/clicks")
+async def track_click(click: ClickEventRequest, request: Request):
+    """Tracks search result click-through events for CTR calculation."""
+    site = db.get_site(click.site_id)
+    if not site:
+        raise HTTPException(status_code=404, detail=f"Site '{click.site_id}' not found.")
+
+    validate_public_origin(request, site["domain"])
+    click_id = db.log_click(
+        site_id=click.site_id,
+        result_id=click.result_id,
+        rank=click.rank,
+        target_url=click.target_url,
+        query_id=click.query_id,
+        query=click.query
+    )
+    return {"status": "success", "click_id": click_id}
+
+@app.post("/api/feedback")
+async def track_feedback(fb: FeedbackRequest, request: Request):
+    """Tracks visitor result satisfaction feedback (thumbs up / down)."""
+    site = db.get_site(fb.site_id)
+    if not site:
+        raise HTTPException(status_code=404, detail=f"Site '{fb.site_id}' not found.")
+
+    validate_public_origin(request, site["domain"])
+    fb_id = db.save_feedback(
+        site_id=fb.site_id,
+        is_positive=fb.is_positive,
+        query=fb.query
+    )
+    return {"status": "success", "feedback_id": fb_id}
 
 @app.get("/api/overrides/{site_id}")
 async def get_overrides(
