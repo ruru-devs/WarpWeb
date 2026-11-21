@@ -1,7 +1,7 @@
 """
 WarpWeb SQLite Database & Analytics Store
 Stores:
-- Sites & Crawled Sections
+- Sites & Crawled Sections (with owner api_key_hash)
 - Query Logs (Total searches, Click-through rates)
 - Zero-Result Queries (The core B2B value metric)
 - Lead Submissions (Visitor contact info captured on no-match)
@@ -10,6 +10,7 @@ Stores:
 import sqlite3
 import json
 import time
+import hashlib
 from typing import List, Dict, Any, Optional
 from app.models import SectionNode, OverrideRule, LeadCaptureRequest
 
@@ -24,9 +25,15 @@ def init_db(db_path: str = DB_PATH):
         site_id TEXT PRIMARY KEY,
         domain TEXT NOT NULL,
         name TEXT NOT NULL,
-        created_at REAL
+        created_at REAL,
+        api_key_hash TEXT
     )
     """)
+
+    # Check and run migration if api_key_hash column is missing
+    site_cols = [c[1] for c in cur.execute("PRAGMA table_info(sites)").fetchall()]
+    if "api_key_hash" not in site_cols:
+        cur.execute("ALTER TABLE sites ADD COLUMN api_key_hash TEXT")
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS sections (
@@ -77,6 +84,18 @@ def init_db(db_path: str = DB_PATH):
     )
     """)
 
+    # Seed demo keys if sites exist without api_key_hash
+    demo_keys = {
+        "apexcare-clinic": "ww_dev_apexcare_secret",
+        "shoppulse-commerce": "ww_dev_shoppulse_secret"
+    }
+    for sid, k in demo_keys.items():
+        k_hash = hashlib.sha256(k.encode("utf-8")).hexdigest()
+        cur.execute(
+            "UPDATE sites SET api_key_hash = ? WHERE site_id = ? AND (api_key_hash IS NULL OR api_key_hash = '')",
+            (k_hash, sid)
+        )
+
     conn.commit()
     conn.close()
 
@@ -90,12 +109,37 @@ class DatabaseManager:
         conn.row_factory = sqlite3.Row
         return conn
 
-    def save_site(self, site_id: str, domain: str, name: str):
+    def save_site(self, site_id: str, domain: str, name: str, api_key_hash: Optional[str] = None):
         with self._get_conn() as conn:
+            # Preserve existing api_key_hash if not provided
+            existing = conn.execute("SELECT api_key_hash FROM sites WHERE site_id = ?", (site_id,)).fetchone()
+            final_hash = api_key_hash if api_key_hash is not None else (existing["api_key_hash"] if existing else None)
+
             conn.execute(
-                "INSERT OR REPLACE INTO sites (site_id, domain, name, created_at) VALUES (?, ?, ?, ?)",
-                (site_id, domain, name, time.time())
+                """
+                INSERT OR REPLACE INTO sites (site_id, domain, name, created_at, api_key_hash)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (site_id, domain, name, time.time(), final_hash)
             )
+
+    def get_site(self, site_id: str) -> Optional[Dict[str, Any]]:
+        with self._get_conn() as conn:
+            row = conn.execute("SELECT * FROM sites WHERE site_id = ?", (site_id,)).fetchone()
+            if not row:
+                return None
+            return {
+                "site_id": row["site_id"],
+                "domain": row["domain"],
+                "name": row["name"],
+                "created_at": row["created_at"],
+                "api_key_hash": row["api_key_hash"]
+            }
+
+    def set_site_api_key(self, site_id: str, raw_key: str):
+        k_hash = hashlib.sha256(raw_key.encode("utf-8")).hexdigest()
+        with self._get_conn() as conn:
+            conn.execute("UPDATE sites SET api_key_hash = ? WHERE site_id = ?", (k_hash, site_id))
 
     def save_sections(self, site_id: str, sections: List[SectionNode]):
         with self._get_conn() as conn:

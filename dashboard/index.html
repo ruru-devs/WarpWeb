@@ -27,6 +27,8 @@
           <option value="apexcare-clinic">ApexCare Specialty Hospital (5 pages)</option>
           <option value="shoppulse-commerce">PulseTech Pro Audio Commerce (5 pages)</option>
         </select>
+        <input id="siteApiKey" type="password" placeholder="Owner API Key" title="Enter owner API Key"
+          class="bg-gray-900 border border-gray-700 text-white text-xs px-3 py-1.5 rounded-lg focus:outline-none w-44" />
         <button onclick="triggerReindex()" class="bg-blue-600 hover:bg-blue-500 text-white text-sm px-4 py-2 rounded-lg font-medium transition">Re-crawl & Sync</button>
       </div>
     </div>
@@ -151,58 +153,151 @@
     let currentSiteId = "apexcare-clinic";
     const API_BASE = "http://localhost:8000";
 
+    const defaultDevKeys = {
+      "apexcare-clinic": "ww_dev_apexcare_secret",
+      "shoppulse-commerce": "ww_dev_shoppulse_secret"
+    };
+
+    function getApiKey() {
+      const inputEl = document.getElementById('siteApiKey');
+      if (inputEl && inputEl.value.trim()) {
+        return inputEl.value.trim();
+      }
+      return defaultDevKeys[currentSiteId] || "";
+    }
+
+    function initApiKeyInput() {
+      const inputEl = document.getElementById('siteApiKey');
+      if (inputEl) {
+        inputEl.value = defaultDevKeys[currentSiteId] || "";
+        inputEl.addEventListener('change', () => {
+          loadAnalytics();
+        });
+      }
+    }
+
     function switchSite(newSiteId) {
       currentSiteId = newSiteId;
+      initApiKeyInput();
       loadAnalytics();
     }
 
     async function loadAnalytics() {
       try {
-        const res = await fetch(`${API_BASE}/api/analytics/${currentSiteId}`);
+        const apiKey = getApiKey();
+        const res = await fetch(`${API_BASE}/api/analytics/${currentSiteId}`, {
+          headers: {
+            'X-API-Key': apiKey
+          }
+        });
+        if (res.status === 401 || res.status === 403) {
+          console.warn("Authentication failed for owner analytics");
+          document.getElementById('statFindability').innerText = "Auth Req";
+          return;
+        }
         const data = await res.json();
 
-        document.getElementById('statTotalSearches').innerText = data.total_queries || 0;
-        document.getElementById('statFindability').innerText = (data.findability_rate || 100) + '%';
-        document.getElementById('statZeroMatch').innerText = data.zero_matches || 0;
-        document.getElementById('statLeadsCount').innerText = (data.recent_leads || []).length;
+        document.getElementById('statTotalSearches').textContent = data.total_queries || 0;
+        document.getElementById('statFindability').textContent = (data.findability_rate || 100) + '%';
+        document.getElementById('statZeroMatch').textContent = data.zero_matches || 0;
+        document.getElementById('statLeadsCount').textContent = (data.recent_leads || []).length;
 
-        // Lost queries
+        // Lost queries (Safe DOM Construction - Immune to XSS)
         const lostEl = document.getElementById('lostQueriesList');
+        lostEl.innerHTML = '';
         if (data.lost_queries && data.lost_queries.length > 0) {
-          lostEl.innerHTML = data.lost_queries.map(q => `
-            <div class="py-3 flex justify-between items-center">
-              <div>
-                <span class="text-sm font-semibold text-white">"${q.query}"</span>
-                <span class="block text-xs text-gray-400">Visitors asked, but no page matched</span>
-              </div>
-              <span class="text-xs bg-red-900 text-red-200 px-2 py-0.5 rounded font-bold">${q.count} times</span>
-            </div>
-          `).join('');
+          data.lost_queries.forEach(q => {
+            const row = document.createElement('div');
+            row.className = 'py-3 flex justify-between items-center';
+
+            const leftDiv = document.createElement('div');
+            const qSpan = document.createElement('span');
+            qSpan.className = 'text-sm font-semibold text-white';
+            qSpan.textContent = `"${q.query}"`;
+            const subSpan = document.createElement('span');
+            subSpan.className = 'block text-xs text-gray-400';
+            subSpan.textContent = 'Visitors asked, but no page matched';
+            leftDiv.appendChild(qSpan);
+            leftDiv.appendChild(subSpan);
+
+            const badge = document.createElement('span');
+            badge.className = 'text-xs bg-red-900 text-red-200 px-2 py-0.5 rounded font-bold';
+            badge.textContent = `${q.count} times`;
+
+            row.appendChild(leftDiv);
+            row.appendChild(badge);
+            lostEl.appendChild(row);
+          });
+        } else {
+          const emptyP = document.createElement('p');
+          emptyP.className = 'text-gray-500 text-sm py-4';
+          emptyP.textContent = 'No missing queries yet. All visitor searches found a match!';
+          lostEl.appendChild(emptyP);
         }
 
-        // Top queries
+        // Top queries (Safe DOM Construction)
         const topEl = document.getElementById('topQueriesList');
+        topEl.innerHTML = '';
         if (data.top_queries && data.top_queries.length > 0) {
-          topEl.innerHTML = data.top_queries.map(q => `
-            <div class="py-3 flex justify-between items-center">
-              <span class="text-sm text-gray-200 font-medium">${q.query}</span>
-              <span class="text-xs bg-blue-900 text-blue-200 px-2 py-0.5 rounded font-bold">${q.count}</span>
-            </div>
-          `).join('');
+          data.top_queries.forEach(q => {
+            const row = document.createElement('div');
+            row.className = 'py-3 flex justify-between items-center';
+
+            const qSpan = document.createElement('span');
+            qSpan.className = 'text-sm text-gray-200 font-medium';
+            qSpan.textContent = q.query;
+
+            const badge = document.createElement('span');
+            badge.className = 'text-xs bg-blue-900 text-blue-200 px-2 py-0.5 rounded font-bold';
+            badge.textContent = q.count;
+
+            row.appendChild(qSpan);
+            row.appendChild(badge);
+            topEl.appendChild(row);
+          });
+        } else {
+          const emptyP = document.createElement('p');
+          emptyP.className = 'text-gray-500 text-sm py-4';
+          emptyP.textContent = 'Awaiting queries from live visitors...';
+          topEl.appendChild(emptyP);
         }
 
-        // Leads
+        // Leads (Safe DOM Construction)
         const leadsEl = document.getElementById('leadsList');
+        leadsEl.innerHTML = '';
         if (data.recent_leads && data.recent_leads.length > 0) {
-          leadsEl.innerHTML = data.recent_leads.map(l => `
-            <div class="p-3 bg-gray-900 rounded-lg border border-gray-800">
-              <div class="flex justify-between items-center">
-                <span class="text-sm font-bold text-purple-300">${l.contact}</span>
-                <span class="text-xs text-gray-500">${new Date(l.timestamp * 1000).toLocaleTimeString()}</span>
-              </div>
-              <p class="text-xs text-gray-400 mt-1">Queried: <strong>"${l.query}"</strong></p>
-            </div>
-          `).join('');
+          data.recent_leads.forEach(l => {
+            const card = document.createElement('div');
+            card.className = 'p-3 bg-gray-900 rounded-lg border border-gray-800';
+
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'flex justify-between items-center';
+            const contactSpan = document.createElement('span');
+            contactSpan.className = 'text-sm font-bold text-purple-300';
+            contactSpan.textContent = l.contact;
+
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'text-xs text-gray-500';
+            timeSpan.textContent = new Date(l.timestamp * 1000).toLocaleTimeString();
+            headerDiv.appendChild(contactSpan);
+            headerDiv.appendChild(timeSpan);
+
+            const queryP = document.createElement('p');
+            queryP.className = 'text-xs text-gray-400 mt-1';
+            queryP.textContent = 'Queried: ';
+            const strongQ = document.createElement('strong');
+            strongQ.textContent = `"${l.query}"`;
+            queryP.appendChild(strongQ);
+
+            card.appendChild(headerDiv);
+            card.appendChild(queryP);
+            leadsEl.appendChild(card);
+          });
+        } else {
+          const emptyP = document.createElement('p');
+          emptyP.className = 'text-gray-500 text-sm py-2';
+          emptyP.textContent = 'No leads submitted yet.';
+          leadsEl.appendChild(emptyP);
         }
 
       } catch (e) {
@@ -212,13 +307,16 @@
 
     async function addOverride(e) {
       e.preventDefault();
-      const phrase = document.getElementById('overridePhrase').value;
-      const url = document.getElementById('overrideUrl').value;
-      const label = document.getElementById('overrideLabel').value;
+      const phrase = document.getElementById('overridePhrase').value.trim();
+      const url = document.getElementById('overrideUrl').value.trim();
+      const label = document.getElementById('overrideLabel').value.trim();
 
-      await fetch(`${API_BASE}/api/overrides`, {
+      const res = await fetch(`${API_BASE}/api/overrides`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': getApiKey()
+        },
         body: JSON.stringify({
           site_id: currentSiteId,
           intent_phrase: phrase,
@@ -227,6 +325,12 @@
           pinned: true
         })
       });
+
+      if (!res.ok) {
+        const err = await res.json();
+        alert(`Failed to pin intent: ${err.detail || res.statusText}`);
+        return;
+      }
 
       alert(`Intent rule pinned: "${phrase}" -> ${url}`);
       document.getElementById('overrideForm').reset();
@@ -237,6 +341,7 @@
       alert("Triggering fresh re-crawl and sync from site...");
     }
 
+    initApiKeyInput();
     loadAnalytics();
     setInterval(loadAnalytics, 4000);
   </script>

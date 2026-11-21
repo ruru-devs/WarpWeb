@@ -405,38 +405,83 @@
   function renderResults(data: any, query: string) {
     resultsBox.innerHTML = '';
     if (!data.results || data.results.length === 0) {
-      resultsBox.innerHTML = `
-        <div class="warpweb-empty">
-          <p>No exact match found across the website for <strong>"${query}"</strong>.</p>
-          <div class="warpweb-lead-box">
-            <strong style="font-size: 13px; color: #0f172a;">Need immediate assistance?</strong>
-            <p style="font-size: 12px; color: #64748b; margin: 4px 0;">Leave your WhatsApp or phone number and our team will get back to you with the answer:</p>
-            <input type="text" id="warpweb-lead-input" class="warpweb-lead-input" placeholder="Phone or WhatsApp number..." />
-            <button id="warpweb-lead-submit" class="warpweb-lead-submit">Request Instant Callback</button>
-          </div>
-        </div>
-      `;
+      const emptyDiv = document.createElement('div');
+      emptyDiv.className = 'warpweb-empty';
 
-      const leadBtn = resultsBox.querySelector('#warpweb-lead-submit');
-      if (leadBtn) {
-        leadBtn.addEventListener('click', async () => {
-          const leadContact = (resultsBox.querySelector('#warpweb-lead-input') as HTMLInputElement).value;
-          if (leadContact) {
+      const pMsg = document.createElement('p');
+      pMsg.textContent = 'No exact match found across the website for "';
+      const strongQuery = document.createElement('strong');
+      strongQuery.textContent = query;
+      pMsg.appendChild(strongQuery);
+      pMsg.appendChild(document.createTextNode('".'));
+      emptyDiv.appendChild(pMsg);
+
+      const leadBox = document.createElement('div');
+      leadBox.className = 'warpweb-lead-box';
+
+      const leadTitle = document.createElement('strong');
+      leadTitle.style.fontSize = '13px';
+      leadTitle.style.color = '#0f172a';
+      leadTitle.textContent = 'Need immediate assistance?';
+      leadBox.appendChild(leadTitle);
+
+      const leadDesc = document.createElement('p');
+      leadDesc.style.fontSize = '12px';
+      leadDesc.style.color = '#64748b';
+      leadDesc.style.margin = '4px 0';
+      leadDesc.textContent = 'Leave your WhatsApp or phone number and our team will get back to you with the answer:';
+      leadBox.appendChild(leadDesc);
+
+      const leadInput = document.createElement('input');
+      leadInput.type = 'text';
+      leadInput.id = 'warpweb-lead-input';
+      leadInput.className = 'warpweb-lead-input';
+      leadInput.placeholder = 'Phone or WhatsApp number...';
+      leadBox.appendChild(leadInput);
+
+      const leadSubmit = document.createElement('button');
+      leadSubmit.id = 'warpweb-lead-submit';
+      leadSubmit.className = 'warpweb-lead-submit';
+      leadSubmit.textContent = 'Request Instant Callback';
+      leadBox.appendChild(leadSubmit);
+
+      emptyDiv.appendChild(leadBox);
+      resultsBox.appendChild(emptyDiv);
+
+      leadSubmit.addEventListener('click', async () => {
+        const leadContact = leadInput.value.trim();
+        if (leadContact) {
+          try {
             await fetch(`${apiHost}/api/leads`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ site_id: siteId, query: query, visitor_contact: leadContact })
             });
-            resultsBox.innerHTML = `
-              <div class="warpweb-empty">
-                <span style="color: #059669; font-size: 28px;">✓</span>
-                <p style="margin-top: 8px; font-weight: 600; color: #0f172a;">Request logged!</p>
-                <p style="font-size: 13px; color: #64748b;">Our staff will contact ${leadContact} regarding your request.</p>
-              </div>
-            `;
+            resultsBox.innerHTML = '';
+            const successDiv = document.createElement('div');
+            successDiv.className = 'warpweb-empty';
+            const checkSpan = document.createElement('span');
+            checkSpan.style.color = '#059669';
+            checkSpan.style.fontSize = '28px';
+            checkSpan.textContent = '✓';
+            const pSuccess = document.createElement('p');
+            pSuccess.style.marginTop = '8px';
+            pSuccess.style.fontWeight = '600';
+            pSuccess.style.color = '#0f172a';
+            pSuccess.textContent = 'Request logged!';
+            const pDetail = document.createElement('p');
+            pDetail.style.fontSize = '13px';
+            pDetail.style.color = '#64748b';
+            pDetail.textContent = `Our staff will contact ${leadContact} regarding your request.`;
+            successDiv.appendChild(checkSpan);
+            successDiv.appendChild(pSuccess);
+            successDiv.appendChild(pDetail);
+            resultsBox.appendChild(successDiv);
+          } catch (e) {
+            console.error('Lead submission failed:', e);
           }
-        });
-      }
+        }
+      });
       return;
     }
 
@@ -452,49 +497,106 @@
         const u = new URL(item.target_url, window.location.href);
         targetPath = u.pathname;
       } catch (e) {
-        targetPath = item.target_url;
+        targetPath = item.target_url || '';
       }
 
       const isCurrentPage = targetPath === currentPath || targetPath.endsWith(currentPath.split('/').pop() || '');
 
-      let metaInfo = '';
-      if (item.metadata && item.metadata.timings) {
-        metaInfo += `<span class="warpweb-meta-timings">🕒 ${item.metadata.timings}</span>`;
-      }
-      if (item.metadata && item.metadata.price) {
-        metaInfo += `<span class="warpweb-meta-price">💰 ${item.metadata.price}</span>`;
-      }
-
       // Readable breadcrumbs / page tag
       let pageLabel = 'Page';
-      if (item.url.includes('doctors')) pageLabel = 'Doctors & OPD';
-      else if (item.url.includes('diagnostics')) pageLabel = 'Diagnostics & Scans';
-      else if (item.url.includes('departments')) pageLabel = 'Departments';
-      else if (item.url.includes('products')) pageLabel = 'Catalog';
-      else if (item.url.includes('policy')) pageLabel = 'Shipping & Policies';
-      else if (item.url.includes('specs')) pageLabel = 'Tech Specs';
+      const uStr = String(item.url || '');
+      if (uStr.includes('doctors')) pageLabel = 'Doctors & OPD';
+      else if (uStr.includes('diagnostics')) pageLabel = 'Diagnostics & Scans';
+      else if (uStr.includes('departments')) pageLabel = 'Departments';
+      else if (uStr.includes('products')) pageLabel = 'Catalog';
+      else if (uStr.includes('policy')) pageLabel = 'Shipping & Policies';
+      else if (uStr.includes('specs')) pageLabel = 'Tech Specs';
 
-      el.innerHTML = `
-        <div class="warpweb-item-main">
-          <div class="warpweb-item-breadcrumbs">
-            <span>${pageLabel}</span>
-            <span>›</span>
-            ${!isCurrentPage ? `<span class="warpweb-cross-page-badge">Cross-page navigation</span>` : `<span>Current page</span>`}
-          </div>
-          <div class="warpweb-item-title">
-            <span>${item.title}</span>
-            ${item.match_type === 'override' ? '<span class="warpweb-tag" style="background:#fef3c7; color:#b45309;">Verified</span>' : ''}
-          </div>
-          <div class="warpweb-item-snippet">${item.snippet}</div>
-          ${metaInfo ? `<div class="warpweb-item-meta">${metaInfo}</div>` : ''}
-        </div>
-        <div class="warpweb-action-badge">
-          <span>${item.action_label || (isCurrentPage ? 'Jump' : 'Navigate')}</span>
-          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M5 12h14M12 5l7 7-7 7"></path>
-          </svg>
-        </div>
-      `;
+      // Safe DOM construction (No unsanitized innerHTML interpolation)
+      const mainDiv = document.createElement('div');
+      mainDiv.className = 'warpweb-item-main';
+
+      const breadcrumbsDiv = document.createElement('div');
+      breadcrumbsDiv.className = 'warpweb-item-breadcrumbs';
+
+      const pageSpan = document.createElement('span');
+      pageSpan.textContent = pageLabel;
+      const arrowSpan = document.createElement('span');
+      arrowSpan.textContent = '›';
+      breadcrumbsDiv.appendChild(pageSpan);
+      breadcrumbsDiv.appendChild(arrowSpan);
+
+      const navBadge = document.createElement('span');
+      if (!isCurrentPage) {
+        navBadge.className = 'warpweb-cross-page-badge';
+        navBadge.textContent = 'Cross-page navigation';
+      } else {
+        navBadge.textContent = 'Current page';
+      }
+      breadcrumbsDiv.appendChild(navBadge);
+      mainDiv.appendChild(breadcrumbsDiv);
+
+      const titleDiv = document.createElement('div');
+      titleDiv.className = 'warpweb-item-title';
+      const titleSpan = document.createElement('span');
+      titleSpan.textContent = item.title || '';
+      titleDiv.appendChild(titleSpan);
+
+      if (item.match_type === 'override') {
+        const tag = document.createElement('span');
+        tag.className = 'warpweb-tag';
+        tag.style.background = '#fef3c7';
+        tag.style.color = '#b45309';
+        tag.textContent = 'Verified';
+        titleDiv.appendChild(tag);
+      }
+      mainDiv.appendChild(titleDiv);
+
+      const snippetDiv = document.createElement('div');
+      snippetDiv.className = 'warpweb-item-snippet';
+      snippetDiv.textContent = item.snippet || '';
+      mainDiv.appendChild(snippetDiv);
+
+      if (item.metadata && (item.metadata.timings || item.metadata.price)) {
+        const metaDiv = document.createElement('div');
+        metaDiv.className = 'warpweb-item-meta';
+        if (item.metadata.timings) {
+          const timingSpan = document.createElement('span');
+          timingSpan.className = 'warpweb-meta-timings';
+          timingSpan.textContent = `🕒 ${item.metadata.timings}`;
+          metaDiv.appendChild(timingSpan);
+        }
+        if (item.metadata.price) {
+          const priceSpan = document.createElement('span');
+          priceSpan.className = 'warpweb-meta-price';
+          priceSpan.textContent = `💰 ${item.metadata.price}`;
+          metaDiv.appendChild(priceSpan);
+        }
+        mainDiv.appendChild(metaDiv);
+      }
+
+      el.appendChild(mainDiv);
+
+      const actionDiv = document.createElement('div');
+      actionDiv.className = 'warpweb-action-badge';
+      const actionText = document.createElement('span');
+      actionText.textContent = item.action_label || (isCurrentPage ? 'Jump' : 'Navigate');
+      actionDiv.appendChild(actionText);
+
+      // Safe SVG arrow
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('width', '12');
+      svg.setAttribute('height', '12');
+      svg.setAttribute('fill', 'none');
+      svg.setAttribute('stroke', 'currentColor');
+      svg.setAttribute('stroke-width', '2');
+      svg.setAttribute('viewBox', '0 0 24 24');
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', 'M5 12h14M12 5l7 7-7 7');
+      svg.appendChild(path);
+      actionDiv.appendChild(svg);
+
+      el.appendChild(actionDiv);
 
       el.addEventListener('click', () => {
         closeModal();
@@ -519,11 +621,22 @@
     }
 
     // Cross-page navigation: ensure anchor or highlight param is carried over
-    let destinationUrl = item.target_url;
+    let destinationUrl = item.target_url || '';
     if (item.anchor_id && !destinationUrl.includes('#')) {
       destinationUrl += `#${item.anchor_id}`;
     }
-    window.location.href = destinationUrl;
+
+    // URL validation: block dangerous protocols (javascript:, data:, vbscript:)
+    try {
+      const parsedUrl = new URL(destinationUrl, window.location.href);
+      if (parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:') {
+        window.location.href = parsedUrl.href;
+      } else {
+        console.warn('WarpWeb blocked navigation to unsafe URL protocol:', destinationUrl);
+      }
+    } catch (e) {
+      console.warn('WarpWeb invalid destination URL:', destinationUrl);
+    }
   }
 
   (window as any).__warpwebQuick = function (q: string) {
