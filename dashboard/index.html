@@ -29,8 +29,22 @@
         </select>
         <input id="siteApiKey" type="password" placeholder="Owner API Key" title="Enter owner API Key"
           class="bg-gray-900 border border-gray-700 text-white text-xs px-3 py-1.5 rounded-lg focus:outline-none w-44" />
-        <button onclick="triggerReindex()" class="bg-blue-600 hover:bg-blue-500 text-white text-sm px-4 py-2 rounded-lg font-medium transition">Re-crawl & Sync</button>
+        <button id="reindexBtn" onclick="triggerReindex()" class="bg-blue-600 hover:bg-blue-500 text-white text-sm px-4 py-2 rounded-lg font-medium transition flex items-center gap-2">
+          <span>Re-crawl & Sync</span>
+        </button>
       </div>
+    </div>
+
+    <!-- Crawl Job Live Banner -->
+    <div id="crawlBanner" class="hidden mt-4 bg-blue-950/60 border border-blue-500/30 rounded-xl p-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div id="crawlSpinner" class="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+        <div>
+          <span id="crawlStatusText" class="text-sm font-semibold text-blue-200">Crawling target site...</span>
+          <p id="crawlDetailText" class="text-xs text-blue-400 mt-0.5">Following internal links and extracting semantic sections...</p>
+        </div>
+      </div>
+      <span id="crawlStatsBadge" class="text-xs font-mono bg-blue-900/60 text-blue-300 px-3 py-1 rounded-full border border-blue-700/50">0 pages / 0 sections</span>
     </div>
 
     <!-- Core KPI Metric Cards -->
@@ -338,7 +352,90 @@
     }
 
     async function triggerReindex() {
-      alert("Triggering fresh re-crawl and sync from site...");
+      const siteId = document.getElementById('siteSelect').value;
+      const apiKey = getApiKey();
+      const reindexBtn = document.getElementById('reindexBtn');
+      const crawlBanner = document.getElementById('crawlBanner');
+      const crawlStatusText = document.getElementById('crawlStatusText');
+      const crawlDetailText = document.getElementById('crawlDetailText');
+      const crawlStatsBadge = document.getElementById('crawlStatsBadge');
+      const crawlSpinner = document.getElementById('crawlSpinner');
+
+      if (!apiKey) {
+        alert("Please enter owner API key above to trigger re-crawl.");
+        return;
+      }
+
+      reindexBtn.disabled = true;
+      reindexBtn.classList.add('opacity-50');
+      crawlBanner.classList.remove('hidden');
+      crawlSpinner.classList.remove('hidden');
+      crawlStatusText.textContent = "Starting background crawler...";
+      crawlDetailText.textContent = "Checking robots.txt and queuing internal URLs...";
+      crawlStatsBadge.textContent = "Initializing...";
+
+      try {
+        const res = await fetch(`/api/crawl/${siteId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': apiKey
+          },
+          body: JSON.stringify({ max_pages: 50, max_depth: 3 })
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          alert(`Failed to start crawl: ${err.detail || res.statusText}`);
+          crawlBanner.classList.add('hidden');
+          reindexBtn.disabled = false;
+          reindexBtn.classList.remove('opacity-50');
+          return;
+        }
+
+        // Poll crawl status
+        const pollInterval = setInterval(async () => {
+          try {
+            const statusRes = await fetch(`/api/crawl/status/${siteId}`, {
+              headers: { 'X-API-Key': apiKey }
+            });
+            if (!statusRes.ok) return;
+            const data = await statusRes.json();
+
+            crawlStatsBadge.textContent = `${data.pages_crawled || 0} pages / ${data.sections_indexed || 0} sections`;
+
+            if (data.status === 'completed') {
+              clearInterval(pollInterval);
+              crawlSpinner.classList.add('hidden');
+              crawlStatusText.textContent = "Crawl completed successfully!";
+              crawlDetailText.textContent = `Indexed ${data.sections_indexed} sections across ${data.pages_crawled} pages with semantic embeddings.`;
+              reindexBtn.disabled = false;
+              reindexBtn.classList.remove('opacity-50');
+              loadAnalytics();
+              setTimeout(() => {
+                crawlBanner.classList.add('hidden');
+              }, 4000);
+            } else if (data.status === 'failed') {
+              clearInterval(pollInterval);
+              crawlSpinner.classList.add('hidden');
+              crawlStatusText.textContent = "Crawl failed";
+              crawlDetailText.textContent = data.error_message || "An error occurred during crawling";
+              reindexBtn.disabled = false;
+              reindexBtn.classList.remove('opacity-50');
+            } else {
+              crawlStatusText.textContent = "Live crawling in progress...";
+              crawlDetailText.textContent = `Processing internal links and calculating embeddings...`;
+            }
+          } catch (e) {
+            console.error("Poll error:", e);
+          }
+        }, 1500);
+      } catch (err) {
+        alert(`Error triggering crawl: ${err.message}`);
+        crawlBanner.classList.add('hidden');
+        reindexBtn.disabled = false;
+        reindexBtn.classList.remove('opacity-50');
+      }
     }
 
     initApiKeyInput();

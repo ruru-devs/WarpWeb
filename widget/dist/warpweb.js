@@ -222,6 +222,14 @@
     }
     .warpweb-meta-price { color: #0284c7; }
     .warpweb-meta-timings { color: #059669; }
+    .warpweb-actions-container {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      flex-shrink: 0;
+    }
     .warpweb-action-badge {
       display: flex;
       align-items: center;
@@ -233,7 +241,20 @@
       font-size: 12px;
       font-weight: 500;
       white-space: nowrap;
-      flex-shrink: 0;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s ease;
+    }
+    .warpweb-action-badge:hover {
+      background: #0369a1;
+    }
+    .warpweb-action-secondary {
+      background: #f1f5f9;
+      color: #0f172a;
+      border: 1px solid #cbd5e1;
+    }
+    .warpweb-action-secondary:hover {
+      background: #e2e8f0;
     }
     .warpweb-cross-page-badge {
       background: #f1f5f9;
@@ -527,29 +548,56 @@
               mainDiv.appendChild(metaDiv);
             }
             el.appendChild(mainDiv);
-            const actionDiv = document.createElement("div");
-            actionDiv.className = "warpweb-action-badge";
-            const actionText = document.createElement("span");
-            actionText.textContent = item.action_label || (isCurrentPage ? "Jump" : "Navigate");
-            actionDiv.appendChild(actionText);
-            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            svg.setAttribute("width", "12");
-            svg.setAttribute("height", "12");
-            svg.setAttribute("fill", "none");
-            svg.setAttribute("stroke", "currentColor");
-            svg.setAttribute("stroke-width", "2");
-            svg.setAttribute("viewBox", "0 0 24 24");
-            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            path.setAttribute("d", "M5 12h14M12 5l7 7-7 7");
-            svg.appendChild(path);
-            actionDiv.appendChild(svg);
-            el.appendChild(actionDiv);
+            const actionsContainer = document.createElement("div");
+            actionsContainer.className = "warpweb-actions-container";
+            const actionsList = item.actions && item.actions.length > 0 ? item.actions : [{
+              type: item.action_type || "navigate",
+              label: item.action_label || (isCurrentPage ? "Jump" : "Navigate"),
+              url: item.target_url
+            }];
+            actionsList.forEach((act, aIdx) => {
+              const actionBadge = document.createElement("div");
+              actionBadge.className = `warpweb-action-badge ${aIdx > 0 ? "warpweb-action-secondary" : ""}`;
+              const actionText = document.createElement("span");
+              actionText.textContent = act.label;
+              actionBadge.appendChild(actionText);
+              const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+              svg.setAttribute("width", "11");
+              svg.setAttribute("height", "11");
+              svg.setAttribute("fill", "none");
+              svg.setAttribute("stroke", "currentColor");
+              svg.setAttribute("stroke-width", "2");
+              svg.setAttribute("viewBox", "0 0 24 24");
+              const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+              path.setAttribute("d", "M5 12h14M12 5l7 7-7 7");
+              svg.appendChild(path);
+              actionBadge.appendChild(svg);
+              actionBadge.addEventListener("click", (e) => {
+                e.stopPropagation();
+                closeModal();
+                navigateToUrl(act.url);
+              });
+              actionsContainer.appendChild(actionBadge);
+            });
+            el.appendChild(actionsContainer);
             el.addEventListener("click", () => {
               closeModal();
               handleCrossPageNavigation(item, isCurrentPage);
             });
             resultsBox.appendChild(el);
           });
+        }
+        function navigateToUrl(destinationUrl) {
+          try {
+            const parsedUrl = new URL(destinationUrl, window.location.href);
+            if (parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:" || parsedUrl.protocol === "tel:") {
+              window.location.href = parsedUrl.href;
+            } else {
+              console.warn("WarpWeb blocked navigation to unsafe URL protocol:", destinationUrl);
+            }
+          } catch (e) {
+            console.warn("WarpWeb invalid destination URL:", destinationUrl);
+          }
         }
         function handleCrossPageNavigation(item, isCurrentPage) {
           if (isCurrentPage && item.anchor_id) {
@@ -566,16 +614,7 @@
           if (item.anchor_id && !destinationUrl.includes("#")) {
             destinationUrl += `#${item.anchor_id}`;
           }
-          try {
-            const parsedUrl = new URL(destinationUrl, window.location.href);
-            if (parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:") {
-              window.location.href = parsedUrl.href;
-            } else {
-              console.warn("WarpWeb blocked navigation to unsafe URL protocol:", destinationUrl);
-            }
-          } catch (e) {
-            console.warn("WarpWeb invalid destination URL:", destinationUrl);
-          }
+          navigateToUrl(destinationUrl);
         }
         window.__warpwebQuick = function(q) {
           input.value = q;

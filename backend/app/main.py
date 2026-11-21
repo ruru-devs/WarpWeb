@@ -11,7 +11,7 @@ Endpoints:
 import time
 import os
 import urllib.parse
-from fastapi import FastAPI, HTTPException, Request, Header, Depends
+from fastapi import FastAPI, HTTPException, Request, Header, Depends, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, FileResponse
 from typing import Dict, List, Optional
@@ -22,6 +22,7 @@ from app.models import (
     OverrideRule, SynonymRule, LeadCaptureRequest, SectionNode
 )
 from app.crawler.sectionizer import HTMLSectionizer
+from app.crawler.live_crawler import LiveCrawler
 from app.indexer.hybrid_search import HybridIndex
 from app.db.storage import DatabaseManager
 from app.security.auth import (
@@ -280,6 +281,68 @@ async def delete_site_synonym(
     if site_id in active_indices:
         active_indices[site_id].set_synonyms(db.get_synonyms(site_id))
     return {"status": "success"}
+
+class CrawlTriggerRequest(BaseModel):
+    start_url: Optional[str] = Field(None, max_length=1000)
+    max_pages: int = Field(50, ge=1, le=500)
+    max_depth: int = Field(3, ge=1, le=10)
+    use_playwright: bool = False
+    index_pdfs: bool = True
+
+@app.post("/api/crawl/{site_id}")
+async def trigger_site_crawl(
+    site_id: str,
+    background_tasks: BackgroundTasks,
+    payload: Optional[CrawlTriggerRequest] = None,
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    authorization: Optional[str] = Header(None)
+):
+    """Triggers background live-domain crawler with robots.txt compliance and delta hashing."""
+    require_site_auth(site_id, x_api_key, authorization)
+    site = db.get_site(site_id)
+    if not site:
+        raise HTTPException(status_code=404, detail=f"Site '{site_id}' not found.")
+
+    start_url = (payload.start_url if payload and payload.start_url else None) or f"https://{site['domain']}"
+    max_pages = payload.max_pages if payload else 50
+    max_depth = payload.max_depth if payload else 3
+    use_playwright = payload.use_playwright if payload else False
+    index_pdfs = payload.index_pdfs if payload else True
+
+    crawler = LiveCrawler(
+        site_id=site_id,
+        start_url=start_url,
+        max_pages=max_pages,
+        max_depth=max_depth,
+        use_playwright=use_playwright,
+        index_pdfs=index_pdfs
+    )
+
+    def run_crawl_job():
+        crawler.crawl_and_index()
+        # Invalidate in-memory cache so fresh index is picked up
+        active_indices.pop(site_id, None)
+
+    background_tasks.add_task(run_crawl_job)
+    return {
+        "status": "started",
+        "site_id": site_id,
+        "start_url": start_url,
+        "message": "Crawl job running in background"
+    }
+
+@app.get("/api/crawl/status/{site_id}")
+async def get_crawl_status(
+    site_id: str,
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    authorization: Optional[str] = Header(None)
+):
+    """Checks the status of the background crawl job."""
+    require_site_auth(site_id, x_api_key, authorization)
+    job = db.get_crawl_job(site_id)
+    if not job:
+        return {"site_id": site_id, "status": "idle", "pages_crawled": 0, "sections_indexed": 0}
+    return job
 
 @app.get("/warpweb.js")
 async def serve_widget():

@@ -242,6 +242,7 @@ class HybridIndex:
                 match_type=match_type,
                 action_label=sec.action_label or "Jump to section",
                 action_type=sec.action_type,
+                actions=sec.actions,
                 metadata=sec.metadata
             ))
 

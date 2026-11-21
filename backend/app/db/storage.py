@@ -50,11 +50,13 @@ def init_db(db_path: str = DB_PATH):
         metadata_json TEXT,
         heading_path_json TEXT,
         keywords_json TEXT,
-        embedding_blob BLOB
+        embedding_blob BLOB,
+        actions_json TEXT,
+        content_hash TEXT
     )
     """)
 
-    # Check and run migration if heading_path_json / keywords_json / embedding_blob columns are missing
+    # Check and run migration if columns are missing
     section_cols = [c[1] for c in cur.execute("PRAGMA table_info(sections)").fetchall()]
     if "heading_path_json" not in section_cols:
         cur.execute("ALTER TABLE sections ADD COLUMN heading_path_json TEXT")
@@ -62,6 +64,22 @@ def init_db(db_path: str = DB_PATH):
         cur.execute("ALTER TABLE sections ADD COLUMN keywords_json TEXT")
     if "embedding_blob" not in section_cols:
         cur.execute("ALTER TABLE sections ADD COLUMN embedding_blob BLOB")
+    if "actions_json" not in section_cols:
+        cur.execute("ALTER TABLE sections ADD COLUMN actions_json TEXT")
+    if "content_hash" not in section_cols:
+        cur.execute("ALTER TABLE sections ADD COLUMN content_hash TEXT")
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS crawl_jobs (
+        site_id TEXT PRIMARY KEY,
+        status TEXT NOT NULL,
+        pages_crawled INTEGER DEFAULT 0,
+        sections_indexed INTEGER DEFAULT 0,
+        error_message TEXT,
+        started_at REAL,
+        finished_at REAL
+    )
+    """)
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS query_logs (
@@ -200,13 +218,14 @@ class DatabaseManager:
                 INSERT OR REPLACE INTO sections (
                     id, site_id, url, anchor_id, title, content,
                     action_type, action_label, action_url, metadata_json,
-                    heading_path_json, keywords_json
+                    heading_path_json, keywords_json, actions_json, content_hash
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     s.id, site_id, s.url, s.anchor_id, s.title, s.content,
                     s.action_type, s.action_label, s.action_url, json.dumps(s.metadata),
-                    json.dumps(s.heading_path), json.dumps(s.keywords)
+                    json.dumps(s.heading_path), json.dumps(s.keywords),
+                    json.dumps(s.actions), s.content_hash
                 ))
 
     def get_sections(self, site_id: str) -> List[SectionNode]:
@@ -227,6 +246,14 @@ class DatabaseManager:
                         keywords = json.loads(r["keywords_json"])
                     except Exception:
                         keywords = []
+                actions = []
+                if "actions_json" in r.keys() and r["actions_json"]:
+                    try:
+                        actions = json.loads(r["actions_json"])
+                    except Exception:
+                        actions = []
+                content_hash = r["content_hash"] if "content_hash" in r.keys() else None
+
                 sections.append(SectionNode(
                     id=r["id"],
                     url=r["url"],
@@ -238,6 +265,8 @@ class DatabaseManager:
                     action_type=r["action_type"] or "navigate",
                     action_label=r["action_label"],
                     action_url=r["action_url"],
+                    actions=actions,
+                    content_hash=content_hash,
                     metadata=meta
                 ))
             return sections
@@ -324,6 +353,39 @@ class DatabaseManager:
         with self._get_conn() as conn:
             cur = conn.execute("DELETE FROM synonyms WHERE site_id = ? AND id = ?", (site_id, synonym_id))
             return cur.rowcount > 0
+
+    def update_crawl_job(
+        self,
+        site_id: str,
+        status: str,
+        pages_crawled: int = 0,
+        sections_indexed: int = 0,
+        error_message: Optional[str] = None
+    ):
+        with self._get_conn() as conn:
+            now = time.time()
+            existing = conn.execute("SELECT started_at FROM crawl_jobs WHERE site_id = ?", (site_id,)).fetchone()
+            started_at = existing["started_at"] if existing else now
+            finished_at = now if status in ["completed", "failed"] else None
+            conn.execute("""
+            INSERT OR REPLACE INTO crawl_jobs (site_id, status, pages_crawled, sections_indexed, error_message, started_at, finished_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (site_id, status, pages_crawled, sections_indexed, error_message, started_at, finished_at))
+
+    def get_crawl_job(self, site_id: str) -> Optional[Dict[str, Any]]:
+        with self._get_conn() as conn:
+            row = conn.execute("SELECT * FROM crawl_jobs WHERE site_id = ?", (site_id,)).fetchone()
+            if not row:
+                return None
+            return {
+                "site_id": row["site_id"],
+                "status": row["status"],
+                "pages_crawled": row["pages_crawled"],
+                "sections_indexed": row["sections_indexed"],
+                "error_message": row["error_message"],
+                "started_at": row["started_at"],
+                "finished_at": row["finished_at"]
+            }
 
     def get_analytics(self, site_id: str) -> Dict[str, Any]:
         with self._get_conn() as conn:

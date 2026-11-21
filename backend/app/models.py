@@ -18,6 +18,8 @@ class SectionNode(BaseModel):
     action_type: str = Field("navigate", max_length=50) # navigate, book, call, whatsapp, purchase
     action_label: Optional[str] = Field(None, max_length=100)
     action_url: Optional[str] = Field(None, max_length=1000)
+    actions: List[Dict[str, Any]] = Field(default_factory=list) # All detected actions
+    content_hash: Optional[str] = Field(None, max_length=64)
     metadata: Dict[str, Any] = Field(default_factory=dict) # prices, hours, availability, doctor/product tags
 
 class SiteProfile(BaseModel):
@@ -49,9 +51,10 @@ class SearchResultItem(BaseModel):
     target_url: str
     snippet: str
     score: float
-    match_type: str # 'override', 'exact_keyword', 'semantic'
+    match_type: str # 'override', 'hybrid', 'semantic', 'lexical'
     action_label: Optional[str] = None
     action_type: str = "navigate"
+    actions: List[Dict[str, Any]] = Field(default_factory=list)
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 class SearchResponse(BaseModel):
