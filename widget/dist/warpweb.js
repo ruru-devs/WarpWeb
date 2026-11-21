@@ -8,9 +8,9 @@
     }
   };
 
-  // widget/src/warpweb.ts
+  // src/warpweb.ts
   var require_warpweb = __commonJS({
-    "widget/src/warpweb.ts"() {
+    "src/warpweb.ts"() {
       (function() {
         if (window.__warpweb_initialized) return;
         window.__warpweb_initialized = true;
@@ -866,17 +866,33 @@
           }
         }
         function handleCrossPageNavigation(item, isCurrentPage) {
-          if (isCurrentPage && item.anchor_id) {
-            const targetElem = document.getElementById(item.anchor_id);
-            if (targetElem) {
-              targetElem.scrollIntoView({ behavior: "smooth", block: "center" });
-              targetElem.classList.remove("warpweb-highlight-target");
-              void targetElem.offsetWidth;
-              targetElem.classList.add("warpweb-highlight-target");
-              return;
+          if (isCurrentPage) {
+            if (item.anchor_id) {
+              const targetElem = document.getElementById(item.anchor_id);
+              if (targetElem) {
+                targetElem.scrollIntoView({ behavior: "smooth", block: "center" });
+                targetElem.classList.remove("warpweb-highlight-target");
+                void targetElem.offsetWidth;
+                targetElem.classList.add("warpweb-highlight-target");
+                return;
+              }
+            }
+            const domPath = item.metadata?.locator?.dom_path;
+            if (domPath) {
+              try {
+                const domElem = document.querySelector(domPath);
+                if (domElem) {
+                  domElem.scrollIntoView({ behavior: "smooth", block: "center" });
+                  domElem.classList.remove("warpweb-highlight-target");
+                  void domElem.offsetWidth;
+                  domElem.classList.add("warpweb-highlight-target");
+                  return;
+                }
+              } catch (e) {
+              }
             }
           }
-          let destinationUrl = item.target_url || "";
+          let destinationUrl = item.target_url || item.url || "";
           if (item.anchor_id && !destinationUrl.includes("#")) {
             destinationUrl += `#${item.anchor_id}`;
           }

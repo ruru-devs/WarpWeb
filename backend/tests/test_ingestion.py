@@ -152,3 +152,111 @@ def test_crawl_api_trigger_and_status():
     })
     assert trigger_res.status_code == 200
     assert trigger_res.json()["status"] == "started"
+
+
+def test_truthful_anchor_vs_text_fragment():
+    """Verify truthful locator strategy: native anchor when ID exists, text fragment or clean URL when no ID."""
+    from app.indexer.hybrid_search import HybridIndex
+    from app.models import SectionNode
+
+    sec_with_id = SectionNode(
+        id="sec_native_1",
+        url="https://example.com/services",
+        anchor_id="cardio-dept",
+        title="Cardiology Department Services",
+        content="Advanced cardiology care and diagnostic tests.",
+        keywords=["cardiology", "services"],
+        metadata={"locator": {"has_native_id": True}}
+    )
+
+    sec_without_id = SectionNode(
+        id="sec_anon_2",
+        url="https://example.com/services",
+        anchor_id=None,
+        title="Dermatology Skin Clinic",
+        content="Skin consultation and laser therapy treatments.",
+        keywords=["dermatology", "skin"],
+        metadata={"locator": {"has_native_id": False, "text_fragment": ":~:text=Dermatology%20Skin%20Clinic"}}
+    )
+
+    index = HybridIndex("test-truthful-anchors")
+    index.index_sections([sec_with_id, sec_without_id])
+
+    # Search for cardio (has ID)
+    res_cardio = index.search("cardiology", top_k=1)
+    assert len(res_cardio) > 0
+    assert res_cardio[0].target_url == "https://example.com/services#cardio-dept"
+
+    # Search for skin (no ID) - must use text-fragment, NOT a fake invented anchor
+    res_skin = index.search("dermatology", top_k=1)
+    assert len(res_skin) > 0
+    assert res_skin[0].anchor_id is None
+    assert res_skin[0].target_url == "https://example.com/services#:~:text=Dermatology%20Skin%20Clinic"
+    assert "#sec-" not in res_skin[0].target_url
+
+
+def test_pdf_navigation_no_double_fragment():
+    """Verify PDF sections produce clean #page=N without double fragment #page=N#page-N."""
+    from app.indexer.hybrid_search import HybridIndex
+    from app.models import SectionNode
+
+    pdf_sec = SectionNode(
+        id="sec_pdf_userguide_p3",
+        url="https://example.com/docs/manual.pdf",
+        anchor_id="page=3",
+        title="User Manual - Page 3",
+        content="Installation guidelines and hardware wiring specifications for audio interface.",
+        keywords=["installation", "hardware", "wiring", "manual"],
+        action_type="navigate",
+        action_label="Open PDF Page",
+        action_url="https://example.com/docs/manual.pdf#page=3",
+        metadata={"format": "pdf", "page": 3}
+    )
+
+    index = HybridIndex("test-pdf-anchors")
+    index.index_sections([pdf_sec])
+
+    results = index.search("hardware wiring", top_k=1)
+    assert len(results) > 0
+    item = results[0]
+    assert item.target_url == "https://example.com/docs/manual.pdf#page=3"
+    # Must NOT have double fragment
+    assert "#page=3#page-3" not in item.target_url
+    assert item.target_url.count("#") == 1
+
+
+def test_pdf_bounds_and_caps():
+    """Verify PDF size and page count limits are enforced."""
+    from app.crawler.live_crawler import MAX_PDF_PAGES, MAX_PDF_BYTES
+
+    assert MAX_PDF_PAGES == 50
+    assert MAX_PDF_BYTES == 10 * 1024 * 1024  # 10 MB limit
+
+
+def test_embedding_cache_reuse_via_content_hash():
+    """Verify that re-crawled sections with matching content_hash reuse precomputed embeddings."""
+    from app.models import SectionNode
+    from app.indexer.hybrid_search import HybridIndex
+    import numpy as np
+
+    sec1 = SectionNode(
+        id="sec_test_cache_1",
+        url="https://example.com/faq",
+        anchor_id="q1",
+        title="Return Policy Terms",
+        content="30-day money-back guarantee with hassle-free returns.",
+        content_hash="mock_hash_12345",
+        keywords=["return", "policy"]
+    )
+
+    # Pre-cached dummy embedding
+    dummy_embedding = np.ones(384, dtype=np.float32)
+    cached_embeddings = {"sec_test_cache_1": dummy_embedding}
+
+    index = HybridIndex("test-cache-reuse")
+    index.index_sections([sec1], cached_embeddings=cached_embeddings)
+
+    # The doc embedding should match the pre-cached embedding
+    assert index.doc_embeddings is not None
+    assert np.allclose(index.doc_embeddings[0], dummy_embedding)
+

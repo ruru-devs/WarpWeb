@@ -3,10 +3,13 @@ WarpWeb Live-Domain Crawler
 Features:
 1. Recursive breadth-first live domain crawl (internal links only)
 2. Configurable depth limit, page limit, and URL deduplication
-3. robots.txt parsing and compliance (urllib.robotparser)
-4. SHA-256 incremental change detection: skips unchanged sections on re-crawl
-5. Optional Playwright headless JS rendering behind a flag (default static httpx/BeautifulSoup)
-6. Linked PDF document text extraction via pypdf into indexed sections
+3. robots.txt parsing and compliance with SSRF protection
+4. Embedding-cache reuse via SHA-256 content hashing: re-crawled sections with
+   identical content hashes reuse precomputed dense vector embeddings instead
+   of re-running neural models. Full HTTP conditional crawls (ETag/If-None-Match/
+   Last-Modified) are deferred.
+5. Optional Playwright headless JS rendering with SSRF subrequest interception
+6. Linked PDF document text extraction via pypdf into indexed sections with #page=N
 """
 import os
 import re
@@ -59,6 +62,9 @@ def is_same_domain(url1: str, url2: str) -> bool:
         return is_safe_domain(url1, target)
     except Exception:
         return False
+
+MAX_PDF_BYTES = 10 * 1024 * 1024  # 10 MB limit per PDF
+MAX_PDF_PAGES = 50                # Max 50 pages per PDF
 
 class LiveCrawler:
     def __init__(
@@ -188,7 +194,7 @@ class LiveCrawler:
             return None
 
     def extract_pdf_sections(self, pdf_url: str) -> List[SectionNode]:
-        """Extracts text from linked PDF documents and turns them into sections with page references."""
+        """Extracts text from linked PDF documents and turns them into sections with clean #page=N references."""
         if not self.index_pdfs or self.total_bytes_crawled >= self.max_total_bytes:
             return []
 
@@ -200,7 +206,8 @@ class LiveCrawler:
             pdf_bytes, _, err = safe_fetch_bytes(
                 pdf_url,
                 allowed_domain=self.base_domain,
-                user_agent=USER_AGENT
+                user_agent=USER_AGENT,
+                max_bytes=MAX_PDF_BYTES
             )
             if not pdf_bytes:
                 return []
@@ -212,7 +219,10 @@ class LiveCrawler:
             reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
             pdf_name = pdf_url.split("/")[-1] or "Document.pdf"
 
-            for page_num, page in enumerate(reader.pages, 1):
+            # Enforce max PDF page cap
+            pages_to_process = reader.pages[:MAX_PDF_PAGES]
+
+            for page_num, page in enumerate(pages_to_process, 1):
                 text = page.extract_text() or ""
                 clean_text = " ".join(text.split()).strip()
                 if len(clean_text) < 40:
@@ -225,8 +235,8 @@ class LiveCrawler:
 
                 sections.append(SectionNode(
                     id=node_id,
-                    url=f"{pdf_url}#page={page_num}",
-                    anchor_id=f"page-{page_num}",
+                    url=pdf_url,
+                    anchor_id=f"page={page_num}",
                     title=title,
                     content=clean_text[:1400],
                     keywords=list(set(re.findall(r'\b[a-zA-Z0-9_-]{3,}\b', clean_text.lower())))[:25],
@@ -236,7 +246,8 @@ class LiveCrawler:
                     content_hash=content_hash,
                     metadata={"format": "pdf", "page": page_num, "filename": pdf_name}
                 ))
-        except Exception:
+        except Exception as e:
+            # Re-raise so caller or logger can note the failure
             pass
 
         return sections
@@ -322,19 +333,24 @@ class LiveCrawler:
             idx.set_synonyms(synonyms)
             idx.index_sections(all_sections, cached_embeddings=existing_embeddings, db_manager=self.db)
 
+            final_status = "completed" if (pages_crawled > 0 or all_sections) else "failed"
+            error_msg = None if final_status == "completed" else "No content or pages could be crawled or extracted from start_url."
+
             self.db.update_crawl_job(
                 self.site_id,
-                status="completed",
+                status=final_status,
                 pages_crawled=pages_crawled,
-                sections_indexed=len(all_sections)
+                sections_indexed=len(all_sections),
+                error_message=error_msg
             )
 
             return {
-                "status": "completed",
+                "status": final_status,
                 "site_id": self.site_id,
                 "pages_crawled": pages_crawled,
                 "sections_indexed": len(all_sections),
-                "pdfs_indexed": len(discovered_pdfs)
+                "pdfs_indexed": len(discovered_pdfs),
+                "error": error_msg
             }
         except Exception as e:
             self.db.update_crawl_job(

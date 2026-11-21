@@ -963,18 +963,37 @@
   }
 
   function handleCrossPageNavigation(item: any, isCurrentPage: boolean) {
-    if (isCurrentPage && item.anchor_id) {
-      const targetElem = document.getElementById(item.anchor_id);
-      if (targetElem) {
-        targetElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        targetElem.classList.remove('warpweb-highlight-target');
-        void targetElem.offsetWidth;
-        targetElem.classList.add('warpweb-highlight-target');
-        return;
+    if (isCurrentPage) {
+      if (item.anchor_id) {
+        const targetElem = document.getElementById(item.anchor_id);
+        if (targetElem) {
+          targetElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          targetElem.classList.remove('warpweb-highlight-target');
+          void targetElem.offsetWidth;
+          targetElem.classList.add('warpweb-highlight-target');
+          return;
+        }
+      }
+
+      // Truthful DOM path locator fallback for sections without an explicit ID
+      const domPath = item.metadata?.locator?.dom_path;
+      if (domPath) {
+        try {
+          const domElem = document.querySelector(domPath);
+          if (domElem) {
+            domElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            domElem.classList.remove('warpweb-highlight-target');
+            void (domElem as HTMLElement).offsetWidth;
+            domElem.classList.add('warpweb-highlight-target');
+            return;
+          }
+        } catch (e) {
+          // Ignore invalid selector
+        }
       }
     }
 
-    let destinationUrl = item.target_url || '';
+    let destinationUrl = item.target_url || item.url || '';
     if (item.anchor_id && !destinationUrl.includes('#')) {
       destinationUrl += `#${item.anchor_id}`;
     }

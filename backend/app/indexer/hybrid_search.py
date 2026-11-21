@@ -227,7 +227,14 @@ class HybridIndex:
         for score, sec, match_type in scored_candidates[:top_k]:
             target_url = sec.url
             if sec.anchor_id:
-                target_url = f"{sec.url}#{sec.anchor_id}"
+                if "#" in sec.url:
+                    target_url = sec.url
+                else:
+                    target_url = f"{sec.url}#{sec.anchor_id}"
+            elif sec.metadata and isinstance(sec.metadata, dict) and "locator" in sec.metadata:
+                locator = sec.metadata.get("locator", {})
+                tf = locator.get("text_fragment")
+                target_url = f"{sec.url}#{tf}" if tf else sec.url
 
             snippet = sec.content[:160] + "..." if len(sec.content) > 160 else sec.content
 
