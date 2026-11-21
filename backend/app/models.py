@@ -64,6 +64,7 @@ class SearchResponse(BaseModel):
     latency_ms: float
     zero_match: bool = False
     suggested_quick_actions: List[Dict[str, str]] = Field(default_factory=list)
+    model_status: str = "healthy"
 
 class ClickEventRequest(BaseModel):
     site_id: str = Field(..., min_length=1, max_length=100, pattern=r"^[a-zA-Z0-9_\-\.]+$")

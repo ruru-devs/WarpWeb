@@ -25,6 +25,7 @@ from app.models import (
 from app.crawler.sectionizer import HTMLSectionizer
 from app.crawler.live_crawler import LiveCrawler
 from app.indexer.hybrid_search import HybridIndex
+from app.indexer.embeddings import EmbeddingService
 from app.db.storage import DatabaseManager
 from app.security.auth import (
     require_site_auth,
@@ -180,13 +181,16 @@ async def search_intent(req: SearchQuery, request: Request):
         {"label": "Chat on WhatsApp", "url": "https://wa.me/?text=Hello"}
     ]
 
+    model_status = getattr(index, "model_status", "healthy")
+
     return SearchResponse(
         query_id=query_id,
         query=req.query,
         results=results,
         latency_ms=latency_ms,
         zero_match=is_zero,
-        suggested_quick_actions=quick_actions
+        suggested_quick_actions=quick_actions,
+        model_status=model_status
     )
 
 @app.get("/api/analytics/{site_id}")
@@ -543,4 +547,8 @@ async def serve_widget():
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "app": "WarpWeb"}
+    return {
+        "status": "ok",
+        "app": "WarpWeb",
+        "embedding_model_status": EmbeddingService.get_status()
+    }

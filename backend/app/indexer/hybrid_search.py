@@ -77,16 +77,20 @@ class HybridIndex:
 
         # 2. Compute missing embeddings in batch
         if missing_indices and texts_to_embed:
-            new_embs = EmbeddingService.embed_documents(texts_to_embed, self.embedding_model_name)
-            new_cache_to_persist = {}
-            for list_idx, orig_idx in enumerate(missing_indices):
-                emb = new_embs[list_idx]
-                doc_embs_list[orig_idx] = emb
-                s = sections[orig_idx]
-                new_cache_to_persist[s.id] = emb
+            try:
+                new_embs = EmbeddingService.embed_documents(texts_to_embed, self.embedding_model_name)
+                new_cache_to_persist = {}
+                for list_idx, orig_idx in enumerate(missing_indices):
+                    emb = new_embs[list_idx]
+                    if emb is not None:
+                        doc_embs_list[orig_idx] = emb
+                        s = sections[orig_idx]
+                        new_cache_to_persist[s.id] = emb
 
-            if db_manager and new_cache_to_persist:
-                db_manager.save_section_embeddings(self.site_id, new_cache_to_persist)
+                if db_manager and new_cache_to_persist:
+                    db_manager.save_section_embeddings(self.site_id, new_cache_to_persist)
+            except Exception:
+                pass
 
         if doc_embs_list and all(e is not None for e in doc_embs_list):
             self.doc_embeddings = np.array(doc_embs_list, dtype=np.float32)
@@ -152,13 +156,20 @@ class HybridIndex:
         bm25_norm = (bm25_raw / max_bm25) if max_bm25 > 0.0 else np.zeros(len(self.sections))
 
         # 4. Dense Semantic Cosine Similarity
+        dense_norm = np.zeros(len(self.sections))
+        is_semantic_available = False
+
         if self.doc_embeddings is not None and len(self.doc_embeddings) == len(self.sections):
-            query_emb = EmbeddingService.embed_query(expanded_query, self.embedding_model_name)
-            dense_scores = EmbeddingService.cosine_similarity(query_emb, self.doc_embeddings)
-            # Clip cosine similarity to [0.0, 1.0] for scoring
-            dense_norm = np.clip(dense_scores, 0.0, 1.0)
-        else:
-            dense_norm = np.zeros(len(self.sections))
+            try:
+                query_emb = EmbeddingService.embed_query(expanded_query, self.embedding_model_name)
+                if query_emb is not None:
+                    dense_scores = EmbeddingService.cosine_similarity(query_emb, self.doc_embeddings)
+                    dense_norm = np.clip(dense_scores, 0.0, 1.0)
+                    is_semantic_available = True
+            except Exception:
+                is_semantic_available = False
+
+        self.model_status = "degraded_bm25_only" if (EmbeddingService.is_degraded() or not is_semantic_available) else "healthy"
 
         # 5. Hybrid Combination & Calibrated Thresholding
         scored_candidates: List[Tuple[float, SectionNode, str]] = []
@@ -192,19 +203,21 @@ class HybridIndex:
                     boost += 0.06
 
             # Combined Score with balanced modality scaling
-            if b_norm > 0.0 and d_norm > 0.0:
+            if is_semantic_available and b_norm > 0.0 and d_norm > 0.0:
                 combined_score = (bm25_weight * b_norm) + (semantic_weight * d_norm) + boost
             elif b_norm > 0.0:
                 combined_score = (0.75 * b_norm) + boost
-            else:
+            elif is_semantic_available and d_norm > 0.0:
                 combined_score = (0.85 * d_norm) + boost
+            else:
+                combined_score = boost
 
             # Truthful Match Label Assignment
-            if b_norm >= 0.35 and d_norm >= 0.35:
+            if is_semantic_available and b_norm >= 0.35 and d_norm >= 0.35:
                 match_type = "hybrid"
-            elif d_norm >= 0.38:
+            elif is_semantic_available and d_norm >= 0.38:
                 match_type = "semantic"
-            elif b_norm >= 0.25:
+            elif b_norm >= 0.25 or not is_semantic_available:
                 match_type = "lexical"
             else:
                 match_type = "hybrid" if combined_score >= confidence_threshold else "low_confidence"
@@ -212,10 +225,15 @@ class HybridIndex:
             # Confidence Threshold: Reject low confidence noise
             # If semantic embedding indicates the domain is completely unrelated (cosine < 0.20)
             # and there is no strong title match, treat as noise/false-positive
-            if d_norm < 0.20 and (q_lower not in title_lower) and b_norm < 0.70:
+            if is_semantic_available and d_norm < 0.20 and (q_lower not in title_lower) and b_norm < 0.70:
                 continue
 
-            has_sufficient_grounding = (d_norm >= 0.35) or (b_norm >= 0.25) or (boost >= 0.12 and (b_norm > 0 or d_norm > 0.22))
+            has_sufficient_grounding = (
+                (d_norm >= 0.35) or
+                (b_norm >= 0.25) or
+                (boost >= 0.12 and (b_norm > 0 or d_norm > 0.22)) or
+                (not is_semantic_available and (b_norm > 0.0 or boost > 0.0))
+            )
 
             if combined_score >= confidence_threshold and has_sufficient_grounding:
                 scored_candidates.append((combined_score, sec, match_type))

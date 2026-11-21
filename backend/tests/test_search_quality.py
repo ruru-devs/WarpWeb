@@ -137,3 +137,47 @@ def test_synonym_intent_alias_api_and_expansion():
     # Delete synonym
     del_res = client.delete(f"/api/synonyms/{site_id}/{syn_id}", headers=headers)
     assert del_res.status_code == 200
+
+
+def test_embedding_failure_graceful_degradation(monkeypatch):
+    """
+    Verify search pipeline gracefully degrades to BM25+ when embedding model fails:
+    - Does not crash or return 500.
+    - Sets model_status='degraded_bm25_only' in response and health check.
+    - Accurately returns BM25+ results with synonyms and overrides.
+    """
+    site_id = "test-search-site"
+    active_indices.clear()
+
+    # Simulate ONNX runtime / embedding inference failure
+    def mock_failing_embed_query(query, model_name=None):
+        raise RuntimeError("Simulated ONNX Runtime OOM / GPU incompatibility failure")
+
+    monkeypatch.setattr(EmbeddingService, "embed_query", mock_failing_embed_query)
+    EmbeddingService._is_degraded = True
+
+    # 1. Health check reports degradation
+    health_res = client.get("/health")
+    assert health_res.status_code == 200
+    assert health_res.json()["embedding_model_status"] == "degraded_bm25_only"
+
+    # 2. Search query executes without 500 error
+    search_res = client.post("/api/search", json={
+        "site_id": site_id,
+        "query": "cardiology heart failure",
+        "top_k": 3
+    })
+    assert search_res.status_code == 200
+    data = search_res.json()
+
+    # 3. model_status indicates degraded mode
+    assert data["model_status"] == "degraded_bm25_only"
+
+    # 4. BM25+ fallback returns relevant match
+    assert len(data["results"]) >= 1
+    assert "Cardiology" in data["results"][0]["title"]
+    assert data["results"][0]["match_type"] == "lexical"
+
+    # Clean up state for subsequent tests
+    EmbeddingService.reset_status()
+
