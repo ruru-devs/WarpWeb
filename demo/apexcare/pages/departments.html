@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Clinical Departments & Specializations — Apex Care Hospital</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>html { scroll-behavior: smooth; }</style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+  <header class="bg-white border-b sticky top-0 z-40 shadow-sm">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <a href="../index.html" class="text-2xl font-black text-blue-700 tracking-tight">ApexCare</a>
+        <span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-semibold">Specialty Hospital</span>
+      </div>
+      <nav class="hidden md:flex space-x-6 text-sm font-medium text-gray-600">
+        <a href="../index.html" class="hover:text-blue-600">Home</a>
+        <a href="departments.html" class="text-blue-600 font-bold">Departments</a>
+        <a href="doctors.html" class="hover:text-blue-600">Doctors & OPD</a>
+        <a href="diagnostics.html" class="hover:text-blue-600">Diagnostics & MRI</a>
+        <a href="insurance.html" class="hover:text-blue-600">Insurance & TPA</a>
+      </nav>
+      <a href="doctors.html#book-appointment" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">
+        Book Appointment
+      </a>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-12 space-y-12">
+    <div>
+      <h1 class="text-3xl font-black text-gray-900">Hospital Medical Departments</h1>
+      <p class="text-gray-600 mt-2">Comprehensive inpatient and outpatient facilities with state-of-the-art surgical suites.</p>
+    </div>
+
+    <!-- Cardiology -->
+    <div id="dept-cardiology" class="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
+      <h2 class="text-2xl font-bold text-gray-900">Cardiology & Heart Failure Center</h2>
+      <p class="text-gray-600 mt-2">24-hour primary coronary angioplasty, pacemaker implantation, and cardiac intensive care.</p>
+      <div class="mt-4 flex gap-4">
+        <a href="doctors.html#doc-sharma" class="text-blue-600 font-semibold text-sm hover:underline">Meet Cardiologist Dr. Sharma →</a>
+      </div>
+    </div>
+
+    <!-- Orthopedics -->
+    <div id="dept-ortho" class="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
+      <h2 class="text-2xl font-bold text-gray-900">Orthopedics, Robotic Surgery & Spine Center</h2>
+      <p class="text-gray-600 mt-2">Full joint reconstruction, trauma stabilization, sports medicine, and scoliosis management.</p>
+      <div class="mt-4 flex gap-4">
+        <a href="doctors.html#doc-patel" class="text-blue-600 font-semibold text-sm hover:underline">Meet Orthopedic Dr. Patel →</a>
+      </div>
+    </div>
+
+    <!-- Dermatology -->
+    <div id="dept-derma" class="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
+      <h2 class="text-2xl font-bold text-gray-900">Clinical Dermatology & Aesthetics</h2>
+      <p class="text-gray-600 mt-2">Treatment of acute and chronic skin disorders, pediatric eczema, and medical laser therapeutics.</p>
+      <div class="mt-4 flex gap-4">
+        <a href="doctors.html#doc-mehta" class="text-blue-600 font-semibold text-sm hover:underline">Meet Dermatologist Dr. Mehta →</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-white border-t py-8 text-center text-xs text-gray-500">
+    © 2026 ApexCare Specialty Hospital. All rights reserved.
+  </footer>
+
+  <script src="http://localhost:8000/warpweb.js" data-site-id="apexcare-clinic" data-api-host="http://localhost:8000"></script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Apex Care Health & Wellness — Hospital & Specialty Center</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>html { scroll-behavior: smooth; }</style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+  <!-- Header -->
+  <header class="bg-white border-b sticky top-0 z-40 shadow-sm">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <a href="index.html" class="text-2xl font-black text-blue-700 tracking-tight">ApexCare</a>
+        <span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-semibold">Specialty Hospital</span>
+      </div>
+      <nav class="hidden md:flex space-x-6 text-sm font-medium text-gray-600">
+        <a href="index.html" class="text-blue-600 font-bold">Home</a>
+        <a href="pages/departments.html" class="hover:text-blue-600">Departments</a>
+        <a href="pages/doctors.html" class="hover:text-blue-600">Doctors & OPD</a>
+        <a href="pages/diagnostics.html" class="hover:text-blue-600">Diagnostics & MRI</a>
+        <a href="pages/insurance.html" class="hover:text-blue-600">Insurance & TPA</a>
+      </nav>
+      <a href="pages/doctors.html#book-appointment" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">
+        Book Appointment
+      </a>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white py-16 px-6">
+    <div class="max-w-5xl mx-auto text-center">
+      <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight">Multi-Specialty Care Without the Confusion</h1>
+      <p class="mt-4 text-lg text-blue-200 max-w-2xl mx-auto">
+        Leading specialists across Cardiology, Orthopedics, Neurology, and Diagnostics.
+      </p>
+      <div class="mt-8 flex justify-center gap-4">
+        <a href="pages/departments.html" class="bg-white text-blue-900 font-bold px-6 py-3 rounded-lg shadow hover:bg-gray-100">Explore Departments</a>
+        <a href="pages/doctors.html" class="border border-blue-300 text-blue-200 font-semibold px-6 py-3 rounded-lg hover:bg-blue-800">Find a Doctor</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Overview Cards -->
+  <main class="max-w-7xl mx-auto px-6 py-12 space-y-12">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div class="p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+        <h2 class="font-bold text-xl text-blue-900">Dedicated Departments</h2>
+        <p class="text-gray-600 text-sm mt-2">Cardiology, Joint Replacement, Dermatology, and Pediatrics with advanced clinical wards.</p>
+        <a href="pages/departments.html" class="mt-4 inline-block text-blue-600 font-semibold text-sm hover:underline">View All Departments →</a>
+      </div>
+
+      <div class="p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+        <h2 class="font-bold text-xl text-blue-900">Specialist Timings & OPD</h2>
+        <p class="text-gray-600 text-sm mt-2">Check schedules for Dr. Sharma, Dr. Patel, and top visiting consultants.</p>
+        <a href="pages/doctors.html" class="mt-4 inline-block text-blue-600 font-semibold text-sm hover:underline">View Doctor Timings →</a>
+      </div>
+
+      <div class="p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+        <h2 class="font-bold text-xl text-blue-900">Diagnostic Scans & Lab Rates</h2>
+        <p class="text-gray-600 text-sm mt-2">1.5T MRI, 64-slice CT Scan, and executive full-body health checks with transparent pricing.</p>
+        <a href="pages/diagnostics.html" class="mt-4 inline-block text-blue-600 font-semibold text-sm hover:underline">View Diagnostic Pricing →</a>
+      </div>
+    </div>
+
+    <!-- Quick Emergency Contact -->
+    <div id="emergency-banner" class="p-8 bg-red-950 border border-red-800 text-white rounded-xl flex justify-between items-center">
+      <div>
+        <h3 class="text-xl font-bold text-red-300">24/7 Trauma & Ambulance Emergency</h3>
+        <p class="text-sm text-red-200 mt-1">Dedicated trauma center open around the clock.</p>
+      </div>
+      <div class="text-2xl font-black text-white">+91 (011) 4567-8900</div>
+    </div>
+  </main>
+
+  <footer class="bg-white border-t py-8 text-center text-xs text-gray-500">
+    © 2026 ApexCare Specialty Hospital. All rights reserved.
+  </footer>
+
+  <!-- WarpWeb Embed Tag -->
+  <script src="http://localhost:8000/warpweb.js" data-site-id="apexcare-clinic" data-api-host="http://localhost:8000"></script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WarpWeb Owner Admin — Findability & Analytics Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0b0f19; color: #f1f5f9; }
+    .card { background: #131b2e; border: 1px solid #1e293b; border-radius: 12px; }
+  </style>
+</head>
+<body class="p-8">
+  <div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="flex justify-between items-center pb-6 border-b border-gray-800">
+      <div>
+        <div class="flex items-center gap-3">
+          <span class="text-2xl font-black text-blue-400 tracking-tight">WARPWEB</span>
+          <span class="text-xs bg-blue-900 text-blue-300 font-semibold px-2 py-0.5 rounded">B2B SaaS</span>
+        </div>
+        <p class="text-gray-400 text-sm mt-1">Cross-page intent navigation & findability intelligence</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <label class="text-sm text-gray-400">Active Site:</label>
+        <select id="siteSelector" onchange="switchSite(this.value)" class="bg-gray-900 border border-gray-700 text-white text-sm px-3 py-1.5 rounded-lg focus:outline-none">
+          <option value="apexcare-clinic">ApexCare Specialty Hospital (5 pages)</option>
+          <option value="shoppulse-commerce">PulseTech Pro Audio Commerce (5 pages)</option>
+        </select>
+        <button onclick="triggerReindex()" class="bg-blue-600 hover:bg-blue-500 text-white text-sm px-4 py-2 rounded-lg font-medium transition">Re-crawl & Sync</button>
+      </div>
+    </div>
+
+    <!-- Core KPI Metric Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
+      <div class="card p-5">
+        <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Intent Searches</span>
+        <div class="text-3xl font-bold mt-2 text-white" id="statTotalSearches">0</div>
+        <span class="text-xs text-green-400 mt-2 block">↑ Real-time visitor activity</span>
+      </div>
+
+      <div class="card p-5">
+        <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Findability Rate</span>
+        <div class="text-3xl font-bold mt-2 text-blue-400" id="statFindability">100%</div>
+        <span class="text-xs text-gray-400 mt-2 block">Queries resolved to instant jump</span>
+      </div>
+
+      <div class="card p-5 border-yellow-900 bg-opacity-30">
+        <span class="text-xs font-semibold text-yellow-400 uppercase tracking-wider">Zero-Match Searches</span>
+        <div class="text-3xl font-bold mt-2 text-yellow-400" id="statZeroMatch">0</div>
+        <span class="text-xs text-yellow-500 mt-2 block">Lost visitors rescued via lead capture</span>
+      </div>
+
+      <div class="card p-5">
+        <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Captured Leads</span>
+        <div class="text-3xl font-bold mt-2 text-purple-400" id="statLeadsCount">0</div>
+        <span class="text-xs text-gray-400 mt-2 block">Callbacks & WhatsApp requests</span>
+      </div>
+    </div>
+
+    <!-- The Findability Report & Overrides Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+      
+      <!-- Lost Queries / Zero Matches (The Goldmine Value Wedge) -->
+      <div class="card p-6">
+        <div class="flex justify-between items-center mb-4">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <span class="text-yellow-400">⚠️</span> Findability Deficit Report
+            </h3>
+            <p class="text-xs text-gray-400 mt-0.5">What visitors searched for that your website does <em>not</em> answer</p>
+          </div>
+          <span class="text-xs bg-red-950 text-red-400 px-2.5 py-1 rounded-full border border-red-800">Needs Content</span>
+        </div>
+
+        <div id="lostQueriesList" class="divide-y divide-gray-800">
+          <p class="text-gray-500 text-sm py-4">No missing queries yet. All visitor searches found a match!</p>
+        </div>
+      </div>
+
+      <!-- Top Searched Visitor Intents -->
+      <div class="card p-6">
+        <div class="flex justify-between items-center mb-4">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <span class="text-blue-400">🔍</span> Top Visitor Intents
+            </h3>
+            <p class="text-xs text-gray-400 mt-0.5">Most frequent navigation requests</p>
+          </div>
+          <span class="text-xs bg-blue-950 text-blue-400 px-2.5 py-1 rounded-full border border-blue-800">Trending</span>
+        </div>
+
+        <div id="topQueriesList" class="divide-y divide-gray-800">
+          <p class="text-gray-500 text-sm py-4">Awaiting queries from live visitors...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leads Inbox & Intent Pinning Rules -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+      
+      <!-- Leads Inbox -->
+      <div class="card p-6">
+        <h3 class="text-lg font-bold text-white mb-2">📥 Captured Visitor Leads</h3>
+        <p class="text-xs text-gray-400 mb-4">Visitors who requested callbacks or help when searching</p>
+        <div id="leadsList" class="space-y-3">
+          <p class="text-gray-500 text-sm py-2">No leads submitted yet.</p>
+        </div>
+      </div>
+
+      <!-- Intent Pinning / Manual Overrides -->
+      <div class="card p-6">
+        <h3 class="text-lg font-bold text-white mb-2">📌 Pin Intent to Exact URL</h3>
+        <p class="text-xs text-gray-400 mb-4">Guarantee 100% precision for critical commercial actions</p>
+        
+        <form id="overrideForm" onsubmit="addOverride(event)" class="space-y-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-400">Visitor Intent Phrase</label>
+            <input id="overridePhrase" type="text" placeholder="e.g. 'dr sharma appointment' or 'return policy'" required 
+              class="w-full mt-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-400">Target Deep Link / Anchor</label>
+            <input id="overrideUrl" type="text" placeholder="e.g. #book-appointment or https://site.com/refunds" required 
+              class="w-full mt-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-400">Action Button Text</label>
+            <input id="overrideLabel" type="text" placeholder="e.g. 'Book Dr. Sharma Directly'" required 
+              class="w-full mt-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+          </div>
+          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 rounded-lg text-sm transition">
+            Save Intent Pin
+          </button>
+        </form>
+      </div>
+
+    </div>
+
+    <!-- Embed Code Snippet -->
+    <div class="card p-6 mt-8">
+      <h3 class="text-sm font-bold text-gray-300 uppercase tracking-wider mb-2">Embed On Your Website</h3>
+      <p class="text-xs text-gray-400 mb-3">Add this single tag to your website's <code class="text-blue-400">&lt;head&gt;</code> or footer:</p>
+      <div class="bg-gray-950 p-3 rounded-lg border border-gray-800 font-mono text-xs text-green-400 overflow-x-auto">
+        &lt;script src="http://localhost:8000/warpweb.js" data-site-id="demo-clinic-01" data-api-host="http://localhost:8000"&gt;&lt;/script&gt;
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentSiteId = "apexcare-clinic";
+    const API_BASE = "http://localhost:8000";
+
+    function switchSite(newSiteId) {
+      currentSiteId = newSiteId;
+      loadAnalytics();
+    }
+
+    async function loadAnalytics() {
+      try {
+        const res = await fetch(`${API_BASE}/api/analytics/${currentSiteId}`);
+        const data = await res.json();
+
+        document.getElementById('statTotalSearches').innerText = data.total_queries || 0;
+        document.getElementById('statFindability').innerText = (data.findability_rate || 100) + '%';
+        document.getElementById('statZeroMatch').innerText = data.zero_matches || 0;
+        document.getElementById('statLeadsCount').innerText = (data.recent_leads || []).length;
+
+        // Lost queries
+        const lostEl = document.getElementById('lostQueriesList');
+        if (data.lost_queries && data.lost_queries.length > 0) {
+          lostEl.innerHTML = data.lost_queries.map(q => `
+            <div class="py-3 flex justify-between items-center">
+              <div>
+                <span class="text-sm font-semibold text-white">"${q.query}"</span>
+                <span class="block text-xs text-gray-400">Visitors asked, but no page matched</span>
+              </div>
+              <span class="text-xs bg-red-900 text-red-200 px-2 py-0.5 rounded font-bold">${q.count} times</span>
+            </div>
+          `).join('');
+        }
+
+        // Top queries
+        const topEl = document.getElementById('topQueriesList');
+        if (data.top_queries && data.top_queries.length > 0) {
+          topEl.innerHTML = data.top_queries.map(q => `
+            <div class="py-3 flex justify-between items-center">
+              <span class="text-sm text-gray-200 font-medium">${q.query}</span>
+              <span class="text-xs bg-blue-900 text-blue-200 px-2 py-0.5 rounded font-bold">${q.count}</span>
+            </div>
+          `).join('');
+        }
+
+        // Leads
+        const leadsEl = document.getElementById('leadsList');
+        if (data.recent_leads && data.recent_leads.length > 0) {
+          leadsEl.innerHTML = data.recent_leads.map(l => `
+            <div class="p-3 bg-gray-900 rounded-lg border border-gray-800">
+              <div class="flex justify-between items-center">
+                <span class="text-sm font-bold text-purple-300">${l.contact}</span>
+                <span class="text-xs text-gray-500">${new Date(l.timestamp * 1000).toLocaleTimeString()}</span>
+              </div>
+              <p class="text-xs text-gray-400 mt-1">Queried: <strong>"${l.query}"</strong></p>
+            </div>
+          `).join('');
+        }
+
+      } catch (e) {
+        console.error("Failed to load analytics:", e);
+      }
+    }
+
+    async function addOverride(e) {
+      e.preventDefault();
+      const phrase = document.getElementById('overridePhrase').value;
+      const url = document.getElementById('overrideUrl').value;
+      const label = document.getElementById('overrideLabel').value;
+
+      await fetch(`${API_BASE}/api/overrides`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          site_id: currentSiteId,
+          intent_phrase: phrase,
+          target_url: url,
+          action_label: label,
+          pinned: true
+        })
+      });
+
+      alert(`Intent rule pinned: "${phrase}" -> ${url}`);
+      document.getElementById('overrideForm').reset();
+      loadAnalytics();
+    }
+
+    async function triggerReindex() {
+      alert("Triggering fresh re-crawl and sync from site...");
+    }
+
+    loadAnalytics();
+    setInterval(loadAnalytics, 4000);
+  </script>
+</body>
+</html>

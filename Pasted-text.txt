@@ -1,0 +1,435 @@
+Now I understand the idea much more clearly. And honestly, **this is considerably more interesting than a site-specific Vimium.**
+
+You're not trying to make browsing faster by reducing mouse clicks. You're trying to remove the *need to understand a website's navigation structure in the first place*.
+
+The user shouldn't have to know where a website put something.
+
+> **The website is the interface. Your AI is the interpreter between the user's intent and that interface.**
+
+That, to me, is the core of your idea.
+
+## **1. The product: an intent-driven web interface**
+
+Today, the typical internet interaction looks like this:
+
+## **The traditional web**
+
+User has an intention
+
+Opens website
+
+Figures out the layout and navigation
+
+Searches, filters, clicks, scrolls, backtracks
+
+Eventually reaches what they wanted
+
+Your concept changes that:
+
+## **Intent-driven web**
+
+User has an intention
+
+Tells the AI what they want
+
+AI understands the website's structure, content, and capabilities
+
+Directly presents the destination, information, or action
+
+The AI doesn't merely search the website. It possesses a map of the website's information architecture, content, and available actions, so it can serve as an intelligent shortcut to them.
+
+## **2. I see three products hiding inside your idea**
+
+These are related, but separating them is important because they have different technical difficulty and commercial potential.
+
+[Cognito : Your AI Browser Agent | Devpost](https://images.openai.com/static-rsc-4/p3o9lWPAXEZakHxt8i3C3rdLf3tlfplUzf_gTrTumgO18wurNOKk00SIerc47Kh4Diob8_nRpogSvp5FMKkMN0194intc9oHD--stAdsKTBeI-K7ozqEKFlZ1OmMK7IIbXbudaoCOnkwvqEHRsIr-tL_IM950Q74t3f4Cvplhis?purpose=inline)
+
+**A. Universal website navigator**
+
+The browser extension
+
+The user types an intent anywhere. The extension understands the current page and directs them to the appropriate destination, content, button, or section.
+
+[Manta AI — Autonomous Web App Testing for Teams That Ship Fast](https://images.openai.com/static-rsc-4/HA8arxOHVICtearpB-C_8eySKDF7tojVtTxj6eI0sinRxlVVlAKNXg7yyWeJof4I9PxDQIfhKx7aeEJ4-wKWl7yT7uxfAvtfyzH1c3juiIocW7Lxr3GII8A8hAzx8tOP1XcCci9WJquT2JIO_OIklROmzOdJb8a-50Eg3GjRFB0?purpose=inline)
+
+**B. Website intelligence engine**
+
+The underlying brain
+
+Crawls, indexes, and maps an entire website. Learns its pages, relationships, options, products, categories, functionality, and navigation paths.
+
+[AI Assistant Web Browser 🤖 by Andika Wiraputra for Yow on Dribbble](https://images.openai.com/static-rsc-4/h0mUrRc2rxgkUEPDu5UgzZ4XN27AdGHwSJNmnaA8yZjxhEWWoyu2ta9DuOWUaKU9ymak8NxWfIAa80TI0ChykhljOJUtFjOgWX1jDwayBMXBQI90NbktPsyWkPEG0IL6YNkbZrGEOM4ja1ppjfsy1TDgW5AB9XVhw3WlMefBa_o?purpose=inline)
+
+**C. Website-specific AI agents**
+
+The specialized experience
+
+An agent for a particular website, capable of answering questions about it and potentially executing tasks on it.
+
+My recommendation is to build **B as the engine, A as the distribution mechanism, and C as the premium capability**.
+
+## **3. What the AI would actually learn**
+
+Your HTTrack idea is a reasonable starting point for investigation, but downloading a website alone isn't sufficient to teach an AI how it works.
+
+You'd need to build a structured representation of the website.
+
+Imagine the engine processes a website and creates the following layers:
+
+## **Website knowledge representation**
+
+**Layer 1 — Content**
+
+Pages, text, images, products, articles, prices, descriptions, FAQs
+
+**Layer 2 — Structure**
+
+Links, categories, page hierarchy, navigation paths, relationships between pages
+
+**Layer 3 — Functionality**
+
+Search, filtering, sorting, forms, buttons, booking, purchasing, downloads
+
+**Layer 4 — Intent mapping**
+
+What users mean, what actions satisfy them, and how to reach the relevant result
+
+This representation becomes the website's **knowledge base**, which your AI consults at inference time.
+
+You may not need to train an LLM at all.
+
+This is a very important distinction.
+
+Instead of training a new model for every website, you could use:
+
+- A general-purpose LLM to understand natural language.
+- A crawler to collect website data.
+- A parser to extract structure and functionality.
+- A database to store the website's knowledge.
+- Retrieval to fetch the relevant context.
+- A browser automation layer to navigate or execute actions.
+
+This is far cheaper, more maintainable, and easier to update than fine-tuning a separate model for every website.
+
+## **4. Examples — this is where the idea starts to click**
+
+### **Ferrari — product discovery without browsing**
+
+[Ferrari Home Page with Data Capture Form #Digital #Website #Homepage #Sports #Cars #Marketing | Ferrari website, Ferrari party, New ferrari](https://images.openai.com/static-rsc-4/k4p0NuCmE0e32UucIJUS3PA6oINWgTT8ASXC4EpseZP6AmMbpvmaHJTu3i-tkoWKnEWXYSOvBqMZGSF2Ly-yb9cXA9qT6vZhOG9P89gDMCH5rRBs25LKfYBJLmvbQH4yazanzZdtxpkhFcnYpPy-jUv2RhdFhIzXkvcytp78Tlg?purpose=inline)
+
+[Ferrari Official Car Configurator](https://images.openai.com/static-rsc-4/gXsyRTMgmfo-kpwh3zwmeK_4YZq6fYlKBVCX6sq0nWXxhjXTp46sstmHMJDlGvhcm4czvqxCgjY-Rof1lqSz99vR1SncOTUVZ0zT5mWju-mbRixMhehiXTt2v_5hdSPS-fmSQjrVGVVfoh-yBg2RamuB2k6lDYwTynkFdl03HKY?purpose=inline)
+
+[Le configurateur de la Ferrari 296 GTB est en ligne - Motorlegend](https://images.openai.com/static-rsc-4/oYGO5QA4SB2YdUVHgVhy1UFAsJv-rdji6_ox4MYMCQ8pDmG-6mE1hhXg-XMPbqdMwoUAMOWpGL-kTmMs8oLsCKybdid34UXhk2VLMIZC_BMCEMIyLavD0l-te_CfJWxqCgnJFA3O-eJ8Ytu7sO_gtSMOGUWAM_k4_H3B0uKEuxE?purpose=inline)
+
+7
+
+User opens Ferrari's website and asks:
+
+> "Show me the V12 Ferraris that are currently available, and take me to the one with the lowest starting price."
+
+Your AI:
+
+1. Understands that V12 refers to engine configuration.
+2. Identifies the relevant models.
+3. Extracts the listed starting prices if available.
+4. Compares the results.
+5. Presents the lowest-priced match.
+6. Offers a direct link to its page or opens it.
+
+No traversing the navigation menus, manually inspecting each car.
+
+### **GitHub — developer intent rather than menu navigation**
+
+[Project 2](https://images.openai.com/static-rsc-4/RkMYTAJDVcPbwwlt2McQJEpHfEZwZb74UXkuJWH58K3wheI5EMIfPBLjqF8o4GG4ukGgpBiYppuxekb1yhJDOZyUvmHdbFuRKeu6hF41z-Zhuxy8MPPm8FmmAtgu9bLyZ5YVhvSHBkvWs_-aSC290s8sE-OA-MgGQ-gu7o7cAEw?purpose=inline)
+
+[Open source will make you a better programmer | Sandro Maglione](https://images.openai.com/static-rsc-4/X3dQt1A3SOE_TygMTa7k2OCIdH-3AfDyf6arVShSyFDeQsZ9OvULxrc4UfPXNCAHYeyvKkJijR4KMhJ3PZQMJgyM6o69CwwyKGtr01HmgLbzOnSEeRopchSyE170VCxok3JMAFKRFSSgel15n6Y6x_nn44XAzq7QkjKiUUVWzSE?purpose=inline)
+
+[GitHub for Vibe Coders - Repo, Commit, Push, Branch Explained | ctrlship](https://images.openai.com/static-rsc-4/DIeXf2IOZT6PFj_Z1pGBfgEvIVxzypCz0iSUU1KWI8R7wq1vCQ-XQSKkx3wPd9HSNM3EeANQHmIrE68u3xdgnLoNNJoPHjP_O5U3yDy8IJLM268cFKPSLXSgkEWgcy7mlomCUApmpBE3CywgbxJ9UUkL9OptNfhYPz78Wwu74hU?purpose=inline)
+
+Your extension detects that the user is on GitHub and exposes commands that understand GitHub's context.
+
+Examples:
+
+| User instruction                                                 | What your extension does                                          |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------- |
+| "Create a new repo called quantum-sandbox"                       | Opens the creation page, pre-fills the name                       |
+| "Show commits from last week"                                    | Opens the relevant repository commit history with the date filter |
+| "Find every commit mentioning QEC"                               | Searches commit history for QEC                                   |
+| "Show the README"                                                | Directly opens or jumps to the README                             |
+| "Find Python repos about surface codes with more than 500 stars" | Runs the relevant repository search                               |
+| "Go to my fork of Qiskit"                                        | Resolves the relevant repository and navigates to it              |
+
+The interesting part isn't the shortcut itself. It's that the AI understands **the context, terminology, and affordances of the website**.
+
+### **Restaurant — information retrieval plus action**
+
+[Carta](https://images.openai.com/static-rsc-4/Vrw-ZkbQkew3-WZs0Ga8BEsN4RCuEh7Sn3u_NNbuLzTsVS0jMq5s39X-0jcYFFSY7o7aEySBxf56m_haoNpbY2BBb3Vklab5dxKpcjonvOQm3tGP-6iSaiVfeDYcAqq2HRdwtcquy84Viqg1-akBh9_0e8X_PzZmMJeAlwtYG1U?purpose=inline)
+
+[Top 7 Online Reservation Systems for Restaurants](https://images.openai.com/static-rsc-4/iPRmdiF7UyJpzP888JMk5FuGVWV12gpgZokacLqH66XcTPp9kXs43dO6hSmmNEz1v-MyXVNhZ0j1cUIsR-Lv9EV4WtOXMgvzZeYaU28ZasTApcrY6gvGDpR090_T-_GgP7R9KBYA4uD6YLHOhw_eAHT7do2ac_SDqdB0nJ08QPA?purpose=inline)
+
+[Restaurant Reservation Screen by ELIJAH BENJAMIN on Dribbble](https://images.openai.com/static-rsc-4/QXVyuAL0tRjhHnWy_IXoy-uE3YtKNj9DEZ9Y15EQokErenYbw0Bn15Rae-vlc20-V-pjRzzV1u7LkGjQwlBEZ_Hye_NC21ZXkTBV4cN-uiDW3KvTTCx0mpM1duE0dv7KTVXILXSqw_sZjAZFB8eB1u65IwKpmUb2lhp-96F8H3s?purpose=inline)
+
+8
+
+User:
+
+> "Find me vegetarian dishes under ₹400 and tell me if I can book a table on Sunday evening."
+
+The AI could:
+
+- Find vegetarian dishes.
+- Filter by price.
+- Show the relevant items and ingredients.
+- Navigate to reservation booking.
+- Check the available dates and slots, if the website exposes them.
+- Pre-fill a reservation if possible.
+
+If the website offers no online reservation capability, it should tell the user rather than pretend it can book.
+
+### **OnePlus — product and commercial navigation**
+
+[25 Augmented Reality Website Examples (You Can Try Now)](https://images.openai.com/static-rsc-4/uOpJWbycG4zgFFU0EeRe7XD6UX5orNL2VfU1UJwK2XvmV-kJrOLORclQicm-dKinRWbFFwO89ZGWqC2o3Iv5uwrxZP5t7VQofHxzTLjrmDuEDIoGHskqFH7ZxTs9BpU7SNmgRun32FuKfadP4shj9gwU6_oJsDFec1aPiYDwmoE?purpose=inline)
+
+[Buy OnePlus 12 5G (16GB RAM, 512GB, Silky Black) Online - Croma](https://images.openai.com/static-rsc-4/J7UyabhQHmDTwR2lrAPlsELN7SsPb_TI1-G8_P-ovVIW_BGZhXdRU6cxR574cObXy790iMwdP2DR98rmCyRglgul_3baCZt0sBtufjiS7IC8-q9tz83UrdHynz1wfc215Sz7-ALDqGR-SOXuPjyR0QZbaliNYLCdnPYv3BlhqTY?purpose=inline)
+
+User:
+
+> "Take me to the OnePlus flagship with the best camera, but I don't want the foldable."
+
+Instead of making the user explore product menus, the system could identify the relevant lineup, compare specifications, exclude foldables, and direct them to the model showcase or purchase page.
+
+It could also answer:
+
+- "Compare all phones with 512 GB storage."
+- "Which one has the fastest charging?"
+- "Show me the cheapest model with an AMOLED display."
+- "Take me to the accessories compatible with this phone."
+
+That's not a chatbot answering generic questions about OnePlus. It's an intelligent interface *to OnePlus itself*.
+
+## **5. Your original HTTrack idea: how I'd evolve it**
+
+I'd avoid thinking of it as simply "crawl → train model."
+
+Think instead:
+
+**Crawl → Understand → Map → Index → Act**
+
+[Design Web Crawler | AAMAX](https://images.openai.com/static-rsc-4/73l6umrP9PLo_kFm_Y8JlYbmFnaZ1DngQj-rK5i0Y6Vdo5OX85xPVCuW6xwvQ2-eiHbNlvISg26-rYkQ4xlCqxaRvvMYJsfzbtsyr_szJHWogNGxEMT7yeQWOlDFlJhYSWQtkZyu5eltdd17zS6-nPQsI8A7bFMgWBR_EQu3dnA?purpose=inline)
+
+**1. Crawl**
+
+Collect pages, URLs, metadata, assets, links, sitemaps.
+
+[Structured data - Free networking icons](https://images.openai.com/static-rsc-4/R1h_JnrAG7Ua5lUSeysRC4Iw9lP4Db4lEooEZmKXx4d2UQiYuxEpQTgbuDzHMaW-s2HLFGvaS5CcqYPYDVPpReURzYv55NESKlsRvowcYTEyLKnI8Re3B6Wz3VHpl9oSYx2tQV_zY0and_WiJG1wOFp-C2irXUm-7244MED_PUo?purpose=inline)
+
+**2. Understand**
+
+Parse page contents, HTML, DOM, page templates, controls and metadata.
+
+[Minimalist Sitemap Icon - Circles & Lines – Royalty-Free Vector | VectorStock](https://images.openai.com/static-rsc-4/3TFwi9vG_X1D42k-UrT8jKQxRf2rnGAMAIulYIuNDd6EIvWG-LDs_Jln_Ta25MJVYF1jpbSAOksVr3TtGbQK-lVvntZSoHoYaGZeptDZrwVQXSB9GyL7UTLEGNS4_GEy5S9D2Rvb7E4Ki_8n6fzvgOI68xR-fGMoOuDuaxWlSsw?purpose=inline)
+
+**3. Map**
+
+Build page relationships, navigation graph, actions and feature map.
+
+[database icon with search symbol. datum symbol. data storage. flat style icon.](https://images.openai.com/static-rsc-4/5yGr3nl5VLAuYOFt-zbeW5x8PBfQXf_rVTPp30-juD8P7foiyXW6O_qCu2YBz1NpUivsUQv0tVu7EQjKpB-xOO0Fua7IH_Ap-tk4jc9EsQkq2viMtYytxPle4VV88Hejqg_nkihfmQHjg253mdm1Y1GjfBedlWad2Yo-tb0PRYo6NdAuFEGKcCqE0_MF05xM?purpose=inline)
+
+**4. Index**
+
+Store searchable content, structured records, embeddings, URLs, action schemas.
+
+[Project Mariner: When AI Agents Can Click, Scroll, and Work on Their Own](https://images.openai.com/static-rsc-4/PZJ2EQHK0C6bRN56vCsAfFS6a9JeF9zpmMJFLP9BNBFqi3AwntkgtUxiyatGr5SwaP-0aqc4kPjWdZT6P7m7jeezmBHbfQpPNhcgc2hA22K6GHDNc65QjgXWaXQW--JMac3Pl_X3-T952o5ZbI7e-uLKZUxdPJXBX-vxNEqtCu4?purpose=inline)
+
+**5. Act**
+
+Resolve user intent to an answer, destination, interaction or multi-step workflow.
+
+### **The critical technical distinction: offline knowledge vs live browser state**
+
+A website snapshot can tell you:
+
+- What pages exist.
+- Which products are showcased.
+- What features are advertised.
+- Where certain content is located.
+- How the website is structured at crawl time.
+
+But it cannot reliably tell you:
+
+- Whether a restaurant has a reservation available *right now*.
+- Whether a product is still in stock.
+- Whether the current user's account has access to something.
+- What content has appeared since the crawl.
+- Whether a button works after authentication.
+- What a dynamic interface reveals after interaction.
+
+Therefore, the best architecture is hybrid:
+
+### **Website intelligence + live browser**
+
+**Knowledge base**
+
+Pre-crawled information, website maps, descriptions, features, navigation, and known workflows.
+
+**Live browser inspection**
+
+Current DOM, dynamic data, active tabs, login state, live inventory, interactive components.
+
+**Intent execution**
+
+Answer, navigate, filter, interact, or perform the task with the user's permission.
+
+This also solves the IP-blocking problem you encountered in your original SaaS idea to some extent. Instead of your centralized server constantly crawling and repeatedly accessing websites, much of the live interaction could happen through the user's own browser, from their session and connection. Prebuilt site profiles could be cached and shared, while live requests remain user-driven.
+
+It doesn't eliminate blocks or restrictions, and some sites actively prevent automation, but it changes the dependency significantly.
+
+## **6. The most valuable feature might actually be "show me," not "do it"**
+
+There's a distinction between an AI assistant answering and an AI assistant controlling a website.
+
+I would design three response modes:
+
+**Find**
+
+Find the information and present it in the side panel without navigating away.
+
+**Navigate**
+
+Take the user directly to the relevant page, section, product or control.
+
+**Interact**
+
+Apply filters, fill fields, select options, and perform multi-step operations.
+
+**Complete**
+
+Carry out a complete workflow, with confirmation for sensitive or irreversible actions.
+
+For example, on a university website:
+
+> "Find the form for requesting a transcript."
+
+It shouldn't just reply with a URL. It should open the exact page, or if the form is embedded, bring the form into view.
+
+On an e-commerce website:
+
+> "Find me black running shoes, size 9, under ₹5,000."
+
+It could apply filters, present matching products, and let the user choose.
+
+On GitHub:
+
+> "Show me the commits where the quantum circuit simulator was optimized."
+
+It could search the history, retrieve the relevant commits, and present them with links and summaries.
+
+The less the user has to interpret the AI's answer and manually carry out the remaining steps, the more valuable the product becomes.
+
+## **7. What I'd make your first version**
+
+I would resist the temptation to support every website on Earth. That's how this turns into an endless infrastructure project.
+
+Instead, build a browser extension with the following:
+
+**Prototype: Intent Browser**
+
+MVP
+
+Core interaction mockup
+
+**Where do you want to go or what do you want to do?**
+
+Find the commit where authentication was changed and explain what changed...
+
+Suggested actions
+
+Search commit history
+
+Review recent commits
+
+Read repository documentation
+
+### **MVP scope**
+
+| Component      | Implementation                                  |
+| -------------- | ----------------------------------------------- |
+| Browser        | Chromium extension (Chrome/Firefox later)       |
+| Interface      | Side panel + shortcut to summon                 |
+| Input          | Natural-language instruction                    |
+| AI             | API-based LLM; no model training initially      |
+| Page awareness | Current tab URL, DOM, headings, links, controls |
+| Site knowledge | Curated profiles for supported sites            |
+| Search         | Semantic + structured retrieval                 |
+| Navigation     | URL routing, scrolling, highlighting            |
+| Actions        | DOM interaction, guarded by permissions         |
+| Memory         | Cache site maps and profiles                    |
+
+### **Start with three websites**
+
+[GitHub is ready to save your eyes with dark mode, available now | Windows Central](https://images.openai.com/static-rsc-4/8gN7XFOKsUcBRsJIOhmbWN1kTrhLqvlnuNPcfd60p6KeRp3sLIoZxrSB6e0HEp_ZOK-9U6-uhmHErS02VX2Hd_EQnyTJhteBZZkbubVcvfaPBkilMW2-R0ImhMjlqxOc4wUW-69nf4hAKZKcUpeYZa4IghjpdiSmpxTvWvclIs0?purpose=inline)
+
+[9 Website Gamification Examples To Copy (Boost Engagement)](https://images.openai.com/static-rsc-4/m8lAnj6Nqhc8WOeKawJPM2VK8pRWLri9Oua9w54CG_gLTzih-FslAyb_XpyZNsrXaJuMzzMjFjLO02MOoyga_jbaYN2Kq9iAX3cMy8V-f8l525tsc82paZpul9pZVEKk38UXZQbCcoVS7Zi3GFf_eR0TueRrw2PyQ63ZwWUk5ls?purpose=inline)
+
+[YouTube - Remove Shorts on Desktop and Mobile | Tweeks](https://images.openai.com/static-rsc-4/zU2fOWyPin-BhDSPRyE2IhnpSevvij7lMy6TRLxlH6RRgWoZ89OSNm3vBj80_RnLmK8WQY9GUCBQFG0wbqSD5VCHDhuyyjLie0gR10J42Up8c-J0mS0SXwkTvahsnezujzLOsyV5eWj1TMYqCkKC4GvIFndOOJzZvDxx6UnowGU?purpose=inline)
+
+- **GitHub:** Search repositories, navigate files, inspect commits, locate issues, open settings, create repositories.
+- **Reddit:** Search posts, locate communities, filter posts, navigate comment threads, search within subreddit.
+- **YouTube:** Search content, find channels, navigate subscriptions, access history, locate playlists, apply filters.
+
+Don't train a model on them. Create structured profiles defining capabilities, intents, mappings, selectors, and workflows. Let the LLM interpret user commands against those profiles.
+
+That gives you something functional much earlier.
+
+## **8. The actual competitive advantage**
+
+The model itself probably won't be your moat. Anyone can call an LLM API.
+
+Your defensibility could instead come from:
+
+- **Website capability maps:** Structured, continually improved understanding of how websites work.
+- **Reliable action mappings:** Tested selectors, routes, and workflows that don't break every time a website changes its UI.
+- **Intent resolution:** Knowing that different phrases mean the same operation.
+- **Community-maintained site profiles:** Users can create, share, and improve profiles for websites.
+- **Universal fallback:** Even unsupported sites can be understood dynamically from the current page.
+- **Execution reliability:** Actually taking the user where they want to go, rather than merely producing a plausible answer.
+
+The more sites it supports reliably, the more useful the extension becomes.
+
+## **9. The biggest problems you'll eventually face**
+
+I'm enthusiastic about the concept, but these are real engineering hurdles:
+
+- **Dynamic websites:** React, SPA routing, infinite scroll, lazy loading, and content that only appears after interaction.
+- **Website changes:** Selectors and workflows can break when websites update their frontend.
+- **Crawling limitations:** robots policies, anti-bot measures, access restrictions, rate limiting, and terms of service.
+- **Hallucinated actions:** The AI must never invent a button, capability, product, or page.
+- **Security:** An agent reading website content is exposed to prompt injection. Website text must be treated as untrusted data, not instructions to the agent.
+- **Permission boundaries:** Buying, deleting, submitting, posting, booking, or changing account settings should have appropriate safeguards.
+- **Economics:** Crawling, indexing, inference, and browser automation can become expensive if you make every interaction unnecessarily AI-heavy.
+
+These are solvable engineering problems, but reliability is going to matter more than how impressive the AI demo looks.
+
+## **10. My honest assessment**
+
+I think this is a **much stronger SaaS direction than your original URL-processing idea**.
+
+The original idea was dependent on repeatedly accessing and processing content from a website, where you had little control over the source and its restrictions.
+
+This idea has a broader utility. You're reducing friction in a fundamental internet activity: finding and interacting with things.
+
+The best framing I can think of is:
+
+> **Stop navigating websites. Tell them what you want.**
+
+Or, a more technical product vision:
+
+> **An intent layer for the internet — turning websites from navigational interfaces into directly queryable, actionable environments.**
+
+And I'd keep the product deliberately grounded: don't promise an autonomous AI that magically knows every website. Promise an assistant that makes websites dramatically easier to navigate, understand, and use — then earn autonomy site by site.
+
+I would genuinely explore this idea. The next step should be to turn it into a concrete technical prototype, not spend months training a model that you may not even need.
+
+If you want, I can help you turn this into a proper **product blueprint: architecture, extension stack, AI pipeline, site-profile schema, MVP milestones, and a realistic solo-developer build plan**.
+
+🧭Build my SaaS roadmapTap to set up
