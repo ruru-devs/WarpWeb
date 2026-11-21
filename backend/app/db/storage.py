@@ -46,9 +46,18 @@ def init_db(db_path: str = DB_PATH):
         action_type TEXT,
         action_label TEXT,
         action_url TEXT,
-        metadata_json TEXT
+        metadata_json TEXT,
+        heading_path_json TEXT,
+        keywords_json TEXT
     )
     """)
+
+    # Check and run migration if heading_path_json / keywords_json columns are missing
+    section_cols = [c[1] for c in cur.execute("PRAGMA table_info(sections)").fetchall()]
+    if "heading_path_json" not in section_cols:
+        cur.execute("ALTER TABLE sections ADD COLUMN heading_path_json TEXT")
+    if "keywords_json" not in section_cols:
+        cur.execute("ALTER TABLE sections ADD COLUMN keywords_json TEXT")
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS query_logs (
@@ -146,11 +155,16 @@ class DatabaseManager:
             conn.execute("DELETE FROM sections WHERE site_id = ?", (site_id,))
             for s in sections:
                 conn.execute("""
-                INSERT OR REPLACE INTO sections (id, site_id, url, anchor_id, title, content, action_type, action_label, action_url, metadata_json)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT OR REPLACE INTO sections (
+                    id, site_id, url, anchor_id, title, content,
+                    action_type, action_label, action_url, metadata_json,
+                    heading_path_json, keywords_json
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     s.id, site_id, s.url, s.anchor_id, s.title, s.content,
-                    s.action_type, s.action_label, s.action_url, json.dumps(s.metadata)
+                    s.action_type, s.action_label, s.action_url, json.dumps(s.metadata),
+                    json.dumps(s.heading_path), json.dumps(s.keywords)
                 ))
 
     def get_sections(self, site_id: str) -> List[SectionNode]:
@@ -159,12 +173,26 @@ class DatabaseManager:
             sections = []
             for r in rows:
                 meta = json.loads(r["metadata_json"]) if r["metadata_json"] else {}
+                heading_path = []
+                if "heading_path_json" in r.keys() and r["heading_path_json"]:
+                    try:
+                        heading_path = json.loads(r["heading_path_json"])
+                    except Exception:
+                        heading_path = []
+                keywords = []
+                if "keywords_json" in r.keys() and r["keywords_json"]:
+                    try:
+                        keywords = json.loads(r["keywords_json"])
+                    except Exception:
+                        keywords = []
                 sections.append(SectionNode(
                     id=r["id"],
                     url=r["url"],
                     anchor_id=r["anchor_id"],
                     title=r["title"],
+                    heading_path=heading_path,
                     content=r["content"],
+                    keywords=keywords,
                     action_type=r["action_type"] or "navigate",
                     action_label=r["action_label"],
                     action_url=r["action_url"],

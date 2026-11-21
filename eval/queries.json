@@ -1,0 +1,1073 @@
+[
+  {
+    "site_id": "apexcare-clinic",
+    "query": "24/7 emergency contact number",
+    "expected_url": "http://localhost:3000/demo/apexcare/index.html",
+    "expected_anchor": "emergency-banner",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Emergency contact banner on homepage"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "ambulance phone number",
+    "expected_url": "http://localhost:3000/demo/apexcare/index.html",
+    "expected_anchor": "emergency-banner",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Ambulance emergency contact"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "emergency trauma center",
+    "expected_url": "http://localhost:3000/demo/apexcare/index.html",
+    "expected_anchor": "emergency-banner",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Dedicated trauma center"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "urgent care hospital helpline",
+    "expected_url": "http://localhost:3000/demo/apexcare/index.html",
+    "expected_anchor": "emergency-banner",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Synonym query for emergency care"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "emergency number chahiye",
+    "expected_url": "http://localhost:3000/demo/apexcare/index.html",
+    "expected_anchor": "emergency-banner",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish query for emergency contact"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "ambulance bulana hai",
+    "expected_url": "http://localhost:3000/demo/apexcare/index.html",
+    "expected_anchor": "emergency-banner",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish query for ambulance"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "cardiology department",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/departments.html",
+    "expected_anchor": "dept-cardiology",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Cardiology department page"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "heart failure clinic",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/departments.html",
+    "expected_anchor": "dept-cardiology",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Heart failure center in departments"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "angioplasty and pacemaker center",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/departments.html",
+    "expected_anchor": "dept-cardiology",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Angioplasty services"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "dil ki bimari ka ilaj",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/departments.html",
+    "expected_anchor": "dept-cardiology",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish for heart illness treatment"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "heart attack treatment hospital",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/departments.html",
+    "expected_anchor": "dept-cardiology",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Synonym for acute coronary intervention"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "orthopedics robotic surgery",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/departments.html",
+    "expected_anchor": "dept-ortho",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Orthopedics and robotic surgery department"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "spine surgery center",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/departments.html",
+    "expected_anchor": "dept-ortho",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Spine surgery center"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "joint replacement department",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/departments.html",
+    "expected_anchor": "dept-ortho",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Joint replacement department"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "haddi ka hospital",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/departments.html",
+    "expected_anchor": "dept-ortho",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish for bone/ortho hospital"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "knee replacement surgery clinic",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/departments.html",
+    "expected_anchor": "dept-ortho",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Synonym for joint reconstruction"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "clinical dermatology department",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/departments.html",
+    "expected_anchor": "dept-derma",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Dermatology department"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "skin aesthetics clinic",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/departments.html",
+    "expected_anchor": "dept-derma",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Skin aesthetics"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "chronic skin disorder doctor",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/departments.html",
+    "expected_anchor": "dept-derma",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Synonym for dermatology"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "charm rog vibhag",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/departments.html",
+    "expected_anchor": "dept-derma",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish/Hindi for skin department"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "face acne and laser clinic",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/departments.html",
+    "expected_anchor": "dept-derma",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Synonym for aesthetics/derma"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "mri 1.5 tesla price",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/diagnostics.html",
+    "expected_anchor": "mri-pricing",
+    "should_match": true,
+    "category": "exact",
+    "notes": "MRI scan pricing"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "mri brain scan cost",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/diagnostics.html",
+    "expected_anchor": "mri-pricing",
+    "should_match": true,
+    "category": "exact",
+    "notes": "MRI cost details"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "mri scan timing and preparation",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/diagnostics.html",
+    "expected_anchor": "mri-pricing",
+    "should_match": true,
+    "category": "exact",
+    "notes": "MRI preparation guidelines"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "mri karane me kitna kharcha aayega",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/diagnostics.html",
+    "expected_anchor": "mri-pricing",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish for MRI cost"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "magnetic resonance imaging fees",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/diagnostics.html",
+    "expected_anchor": "mri-pricing",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Full form synonym for MRI"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "64 slice ct scan price",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/diagnostics.html",
+    "expected_anchor": "ct-scan-pricing",
+    "should_match": true,
+    "category": "exact",
+    "notes": "CT scan pricing"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "hrct chest scan cost",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/diagnostics.html",
+    "expected_anchor": "ct-scan-pricing",
+    "should_match": true,
+    "category": "exact",
+    "notes": "HRCT chest scan"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "ct scan abdomen charges",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/diagnostics.html",
+    "expected_anchor": "ct-scan-pricing",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "CT abdomen charges"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "ct scan ki fees kitni hai",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/diagnostics.html",
+    "expected_anchor": "ct-scan-pricing",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish for CT scan fee"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "executive full body health checkup",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/diagnostics.html",
+    "expected_anchor": "blood-panel",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Full body blood test panel"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "blood test panel 65 tests",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/diagnostics.html",
+    "expected_anchor": "blood-panel",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Executive checkup blood panel"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "lipid profile and thyroid test cost",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/diagnostics.html",
+    "expected_anchor": "blood-panel",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Lipid and thyroid blood test"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "full body blood test karwana hai",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/diagnostics.html",
+    "expected_anchor": "blood-panel",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish for full body blood test"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "Dr Rajesh Sharma cardiologist",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/doctors.html",
+    "expected_anchor": "doc-sharma",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Doctor Sharma profile"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "Dr Sharma OPD timings",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/doctors.html",
+    "expected_anchor": "doc-sharma",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Sharma OPD schedule"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "chief interventional cardiologist consultation fee",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/doctors.html",
+    "expected_anchor": "doc-sharma",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Cardiologist fee and details"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "dil ke doctor Sharma se milna hai",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/doctors.html",
+    "expected_anchor": "doc-sharma",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish for meeting Dr. Sharma"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "heart specialist doctor timing",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/doctors.html",
+    "expected_anchor": "doc-sharma",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Synonym for cardiologist timing"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "Dr Ananya Patel orthopedic",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/doctors.html",
+    "expected_anchor": "doc-patel",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Doctor Patel orthopedic profile"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "Dr Patel joint replacement fee",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/doctors.html",
+    "expected_anchor": "doc-patel",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Dr Patel consultation charges"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "knee spine surgeon consultation hours",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/doctors.html",
+    "expected_anchor": "doc-patel",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Synonym for orthopedic consultation hours"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "haddi ke doctor Patel ki timing",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/doctors.html",
+    "expected_anchor": "doc-patel",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish for Dr. Patel timing"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "Dr Vikram Mehta dermatologist",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/doctors.html",
+    "expected_anchor": "doc-mehta",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Doctor Mehta profile"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "skin doctor Mehta OPD timings",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/doctors.html",
+    "expected_anchor": "doc-mehta",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Mehta clinic hours"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "acne eczema specialist consultation",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/doctors.html",
+    "expected_anchor": "doc-mehta",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Synonym for dermatologist"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "skin specialist doctor se appointment",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/doctors.html",
+    "expected_anchor": "doc-mehta",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish for dermatologist appointment"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "online appointment booking desk",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/doctors.html",
+    "expected_anchor": "book-appointment",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Appointment booking desk"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "instant doctor consultation slot",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/doctors.html",
+    "expected_anchor": "book-appointment",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Synonym for booking desk"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "doctor appointment book karein",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/doctors.html",
+    "expected_anchor": "book-appointment",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish for book doctor appointment"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "empanelled insurance providers list",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/insurance.html",
+    "expected_anchor": "tpa-empanelment",
+    "should_match": true,
+    "category": "exact",
+    "notes": "TPA insurance providers"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "mediclaim cashless tpa partners",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/insurance.html",
+    "expected_anchor": "tpa-empanelment",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Cashless TPA partners"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "star health insurance cashless",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/insurance.html",
+    "expected_anchor": "tpa-empanelment",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Star Health coverage"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "hospitals tie up with icici lombard",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/insurance.html",
+    "expected_anchor": "tpa-empanelment",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "ICICI Lombard tie-up"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "insurance se admit ho sakte hain kya",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/insurance.html",
+    "expected_anchor": "tpa-empanelment",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish for cashless admission"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "cashless admission helpdesk hours",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/insurance.html",
+    "expected_anchor": "cashless-desk-timings",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Cashless desk timings"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "tpa desk counter location",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/insurance.html",
+    "expected_anchor": "cashless-desk-timings",
+    "should_match": true,
+    "category": "exact",
+    "notes": "TPA helpdesk counter location"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "insurance counter timing ground floor",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/insurance.html",
+    "expected_anchor": "cashless-desk-timings",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Synonym for cashless desk timings"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "tpa claim desk kahan par hai",
+    "expected_url": "http://localhost:3000/demo/apexcare/pages/insurance.html",
+    "expected_anchor": "cashless-desk-timings",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish for TPA desk location"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "buy gaming laptop rtx 4080",
+    "expected_url": null,
+    "expected_anchor": null,
+    "should_match": false,
+    "category": "negative",
+    "notes": "Unrelated product - should yield 0 results"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "bitcoin crypto investment trading",
+    "expected_url": null,
+    "expected_anchor": null,
+    "should_match": false,
+    "category": "negative",
+    "notes": "Unrelated financial query - should yield 0 results"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "dominos pizza delivery menu",
+    "expected_url": null,
+    "expected_anchor": null,
+    "should_match": false,
+    "category": "negative",
+    "notes": "Unrelated food query - should yield 0 results"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "used cars for sale olx",
+    "expected_url": null,
+    "expected_anchor": null,
+    "should_match": false,
+    "category": "negative",
+    "notes": "Unrelated automobile query - should yield 0 results"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "indigo flight ticket booking",
+    "expected_url": null,
+    "expected_anchor": null,
+    "should_match": false,
+    "category": "negative",
+    "notes": "Unrelated travel query - should yield 0 results"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "python django web development course",
+    "expected_url": null,
+    "expected_anchor": null,
+    "should_match": false,
+    "category": "negative",
+    "notes": "Unrelated tech training query - should yield 0 results"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "imax movie tickets multiplex",
+    "expected_url": null,
+    "expected_anchor": null,
+    "should_match": false,
+    "category": "negative",
+    "notes": "Unrelated entertainment query - should yield 0 results"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "whey protein powder bodybuilding",
+    "expected_url": null,
+    "expected_anchor": null,
+    "should_match": false,
+    "category": "negative",
+    "notes": "Unrelated fitness supplement query - should yield 0 results"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "electric scooter battery charging price",
+    "expected_url": null,
+    "expected_anchor": null,
+    "should_match": false,
+    "category": "negative",
+    "notes": "Unrelated vehicle charging query - should yield 0 results"
+  },
+  {
+    "site_id": "apexcare-clinic",
+    "query": "plumber bathroom pipe leak repair",
+    "expected_url": null,
+    "expected_anchor": null,
+    "should_match": false,
+    "category": "negative",
+    "notes": "Unrelated home service query - should yield 0 results"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "Pulse Pro X wireless ANC headphone",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/headphones.html",
+    "expected_anchor": "pulse-pro-x",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Flagship headphone section"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "flagship noise cancelling headphones 45 hour battery",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/headphones.html",
+    "expected_anchor": "pulse-pro-x",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Pulse Pro X features"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "LDAC hi-res bluetooth headphones",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/headphones.html",
+    "expected_anchor": "pulse-pro-x",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "LDAC codec headphones"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "best over ear studio headphones price",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/headphones.html",
+    "expected_anchor": "pulse-pro-x",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Studio headphones query"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "pulse pro x ka price kitna hai",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/headphones.html",
+    "expected_anchor": "pulse-pro-x",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish for Pulse Pro X price"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "sabse accha noise cancelling headphone",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/headphones.html",
+    "expected_anchor": "pulse-pro-x",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish for best ANC headphone"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "Pulse Lite ANC headphone",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/headphones.html",
+    "expected_anchor": "pulse-lite-anc",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Pulse Lite product section"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "lightweight foldable commuter headphones",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/headphones.html",
+    "expected_anchor": "pulse-lite-anc",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Pulse Lite commuter features"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "affordable 30 hour active noise cancellation",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/headphones.html",
+    "expected_anchor": "pulse-lite-anc",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Pulse Lite battery and ANC"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "travelling ke liye halka headphone",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/headphones.html",
+    "expected_anchor": "pulse-lite-anc",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish for lightweight travel headphone"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "budget ANC headphones under 5000",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/headphones.html",
+    "expected_anchor": "pulse-lite-anc",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Budget ANC headphones"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "Pulse Buds Pro wireless earbuds",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/earbuds.html",
+    "expected_anchor": "pulse-buds-pro",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Pulse Buds Pro product section"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "spatial audio TWS earbuds titanium drivers",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/earbuds.html",
+    "expected_anchor": "pulse-buds-pro",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Pulse Buds titanium drivers"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "IPX7 waterproof earbuds for gym",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/earbuds.html",
+    "expected_anchor": "pulse-buds-pro",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Sweatproof waterproof gym earbuds"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "earbuds ka battery backup kitna hai",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/earbuds.html",
+    "expected_anchor": "pulse-buds-pro",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish for earbuds battery life"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "bluetooth wireless earphone for running",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/earbuds.html",
+    "expected_anchor": "pulse-buds-pro",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Running workout earphones"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "gaming latency earbuds low lag",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/earbuds.html",
+    "expected_anchor": "pulse-buds-pro",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Low latency gaming earbuds"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "paani me kharab na hone wale earbuds",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/earbuds.html",
+    "expected_anchor": "pulse-buds-pro",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish for waterproof earbuds"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "30-day money-back guarantee return policy",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/policy.html",
+    "expected_anchor": "return-policy",
+    "should_match": true,
+    "category": "exact",
+    "notes": "30-day return policy"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "how to return opened product",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/policy.html",
+    "expected_anchor": "return-policy",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Return conditions"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "refund timeline to bank account",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/policy.html",
+    "expected_anchor": "return-policy",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Bank account refund process"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "paise wapas kab tak aate hain",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/policy.html",
+    "expected_anchor": "return-policy",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish for refund duration"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "agar pasand na aaye toh wapas hoga kya",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/policy.html",
+    "expected_anchor": "return-policy",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish for return eligibility"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "return shipping courier pickup charges",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/policy.html",
+    "expected_anchor": "return-policy",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Free return shipping pickup"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "2-year manufacturer warranty terms",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/policy.html",
+    "expected_anchor": "warranty-terms",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Warranty coverage terms"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "how to claim warranty for dead driver",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/policy.html",
+    "expected_anchor": "warranty-terms",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Claiming warranty for defective speaker"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "warranty registration serial number",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/policy.html",
+    "expected_anchor": "warranty-terms",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Serial number warranty activation"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "warranty claim kaise karein",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/policy.html",
+    "expected_anchor": "warranty-terms",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish for warranty claim procedure"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "headphone ka ek side band ho gaya warranty",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/policy.html",
+    "expected_anchor": "warranty-terms",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish for defective side warranty"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "is accidental water damage covered under warranty",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/policy.html",
+    "expected_anchor": "warranty-terms",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Warranty coverage exceptions"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "express shipping delivery timelines",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/policy.html",
+    "expected_anchor": "shipping-delivery",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Shipping delivery times"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "same day delivery metro cities",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/policy.html",
+    "expected_anchor": "shipping-delivery",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Metro city fast shipping"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "delhi mumbai order delivery kitne din me hoga",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/policy.html",
+    "expected_anchor": "shipping-delivery",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish for metro shipping timeline"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "free shipping minimum order value",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/policy.html",
+    "expected_anchor": "shipping-delivery",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Free delivery order threshold"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "tracking number courier partner",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/policy.html",
+    "expected_anchor": "shipping-delivery",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Courier tracking query"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "delivery charges kitne hain",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/policy.html",
+    "expected_anchor": "shipping-delivery",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish for delivery fees"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "specs comparison table Pulse Pro X vs Pulse Buds",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/specs.html",
+    "expected_anchor": "comparison-table",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Specification comparison table"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "which model has longest battery life comparison",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/specs.html",
+    "expected_anchor": "comparison-table",
+    "should_match": true,
+    "category": "synonym",
+    "notes": "Battery comparison in specs"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "codec support comparison AAC vs LDAC",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/specs.html",
+    "expected_anchor": "comparison-table",
+    "should_match": true,
+    "category": "exact",
+    "notes": "Bluetooth codecs comparison"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "sab models ka comparison dekhna hai",
+    "expected_url": "http://localhost:3000/demo/shoppulse/pages/specs.html",
+    "expected_anchor": "comparison-table",
+    "should_match": true,
+    "category": "hinglish",
+    "notes": "Hinglish for comparing models"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "cardiologist heart doctor appointment",
+    "expected_url": null,
+    "expected_anchor": null,
+    "should_match": false,
+    "category": "negative",
+    "notes": "Hospital query on audio site - should yield 0 results"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "fresh organic grocery vegetables",
+    "expected_url": null,
+    "expected_anchor": null,
+    "should_match": false,
+    "category": "negative",
+    "notes": "Grocery query - should yield 0 results"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "fixed deposit interest rates sbi",
+    "expected_url": null,
+    "expected_anchor": null,
+    "should_match": false,
+    "category": "negative",
+    "notes": "Banking query - should yield 0 results"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "car vehicle insurance renewal",
+    "expected_url": null,
+    "expected_anchor": null,
+    "should_match": false,
+    "category": "negative",
+    "notes": "Car insurance query - should yield 0 results"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "5 star hotel booking goa",
+    "expected_url": null,
+    "expected_anchor": null,
+    "should_match": false,
+    "category": "negative",
+    "notes": "Hotel query - should yield 0 results"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "root canal dentist tooth clinic",
+    "expected_url": null,
+    "expected_anchor": null,
+    "should_match": false,
+    "category": "negative",
+    "notes": "Dental query - should yield 0 results"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "kindergarten school admission form",
+    "expected_url": null,
+    "expected_anchor": null,
+    "should_match": false,
+    "category": "negative",
+    "notes": "School query - should yield 0 results"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "real estate residential plots bangalore",
+    "expected_url": null,
+    "expected_anchor": null,
+    "should_match": false,
+    "category": "negative",
+    "notes": "Real estate query - should yield 0 results"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "blood test complete hemogram lab",
+    "expected_url": null,
+    "expected_anchor": null,
+    "should_match": false,
+    "category": "negative",
+    "notes": "Lab test query - should yield 0 results"
+  },
+  {
+    "site_id": "shoppulse-commerce",
+    "query": "international flight luggage baggage allowance",
+    "expected_url": null,
+    "expected_anchor": null,
+    "should_match": false,
+    "category": "negative",
+    "notes": "Airlines query - should yield 0 results"
+  }
+]
