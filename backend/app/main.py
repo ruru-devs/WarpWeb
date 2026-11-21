@@ -20,7 +20,7 @@ from pydantic import BaseModel, Field
 from app.models import (
     SearchQuery, SearchResponse, SearchResultItem, 
     OverrideRule, SynonymRule, LeadCaptureRequest, SectionNode,
-    ClickEventRequest, FeedbackRequest
+    ClickEventRequest, FeedbackRequest, RetentionCleanupRequest
 )
 from app.crawler.sectionizer import HTMLSectionizer
 from app.crawler.live_crawler import LiveCrawler
@@ -405,6 +405,69 @@ async def get_crawl_status(
     if not job:
         return {"site_id": site_id, "status": "idle", "pages_crawled": 0, "sections_indexed": 0}
     return job
+
+@app.get("/api/export/{site_id}")
+async def export_site_data(
+    site_id: str,
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    authorization: Optional[str] = Header(None)
+):
+    """Exports all site telemetry, leads, rules, and configurations (owner auth required)."""
+    require_site_auth(site_id, x_api_key, authorization)
+    site = db.get_site(site_id)
+    if not site:
+        raise HTTPException(status_code=404, detail=f"Site '{site_id}' not found.")
+    return db.export_site_data(site_id)
+
+@app.delete("/api/leads/{site_id}/{lead_id}")
+async def delete_site_lead(
+    site_id: str,
+    lead_id: int,
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    authorization: Optional[str] = Header(None)
+):
+    """Deletes an individual lead record for GDPR / compliance (owner auth required)."""
+    require_site_auth(site_id, x_api_key, authorization)
+    deleted = db.delete_lead(site_id, lead_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Lead not found.")
+    return {"status": "deleted", "site_id": site_id, "lead_id": lead_id}
+
+@app.delete("/api/site-data/{site_id}")
+async def purge_site_data(
+    site_id: str,
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    authorization: Optional[str] = Header(None)
+):
+    """Purges all indexed sections, logs, leads, and rules for a site (owner auth required)."""
+    require_site_auth(site_id, x_api_key, authorization)
+    site = db.get_site(site_id)
+    if not site:
+        raise HTTPException(status_code=404, detail=f"Site '{site_id}' not found.")
+    db.delete_site_data(site_id)
+    active_indices.pop(site_id, None)
+    return {"status": "purged", "site_id": site_id}
+
+@app.post("/api/cleanup/{site_id}")
+async def cleanup_retention_data(
+    site_id: str,
+    payload: Optional[RetentionCleanupRequest] = None,
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    authorization: Optional[str] = Header(None)
+):
+    """Purges historical logs, clicks, feedback, and leads older than retention threshold."""
+    require_site_auth(site_id, x_api_key, authorization)
+    site = db.get_site(site_id)
+    if not site:
+        raise HTTPException(status_code=404, detail=f"Site '{site_id}' not found.")
+    days = payload.days if payload else 90
+    purged_stats = db.cleanup_old_data(site_id, days=days)
+    return {
+        "status": "success",
+        "site_id": site_id,
+        "retention_days": days,
+        "purged": purged_stats
+    }
 
 @app.get("/warpweb.js")
 async def serve_widget():

@@ -123,9 +123,20 @@ def init_db(db_path: str = DB_PATH):
         query TEXT NOT NULL,
         visitor_contact TEXT NOT NULL,
         note TEXT,
+        consent INTEGER DEFAULT 1,
+        consent_text TEXT,
+        consent_timestamp REAL,
         timestamp REAL
     )
     """)
+
+    lead_cols = [c[1] for c in cur.execute("PRAGMA table_info(leads)").fetchall()]
+    if "consent" not in lead_cols:
+        cur.execute("ALTER TABLE leads ADD COLUMN consent INTEGER DEFAULT 1")
+    if "consent_text" not in lead_cols:
+        cur.execute("ALTER TABLE leads ADD COLUMN consent_text TEXT")
+    if "consent_timestamp" not in lead_cols:
+        cur.execute("ALTER TABLE leads ADD COLUMN consent_timestamp REAL")
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS overrides (
@@ -330,9 +341,108 @@ class DatabaseManager:
     def save_lead(self, lead: LeadCaptureRequest):
         with self._get_conn() as conn:
             conn.execute("""
-            INSERT INTO leads (site_id, query, visitor_contact, note, timestamp)
-            VALUES (?, ?, ?, ?, ?)
-            """, (lead.site_id, lead.query, lead.visitor_contact, lead.note, time.time()))
+            INSERT INTO leads (site_id, query, visitor_contact, note, consent, consent_text, consent_timestamp, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                lead.site_id,
+                lead.query,
+                lead.visitor_contact,
+                lead.note,
+                1 if lead.consent else 0,
+                lead.consent_text,
+                lead.consent_timestamp or time.time(),
+                lead.created_at or time.time()
+            ))
+
+    def delete_lead(self, site_id: str, lead_id: int) -> bool:
+        with self._get_conn() as conn:
+            cur = conn.execute("DELETE FROM leads WHERE site_id = ? AND id = ?", (site_id, lead_id))
+            return cur.rowcount > 0
+
+    def export_site_data(self, site_id: str) -> Dict[str, Any]:
+        with self._get_conn() as conn:
+            site = conn.execute("SELECT site_id, domain, name, created_at FROM sites WHERE site_id = ?", (site_id,)).fetchone()
+            if not site:
+                return {}
+
+            leads = [
+                dict(r) for r in conn.execute(
+                    "SELECT id, query, visitor_contact, note, consent, consent_text, consent_timestamp, timestamp FROM leads WHERE site_id = ? ORDER BY timestamp DESC",
+                    (site_id,)
+                ).fetchall()
+            ]
+
+            queries = [
+                dict(r) for r in conn.execute(
+                    "SELECT id, query, results_count, is_zero_match, latency_ms, timestamp FROM query_logs WHERE site_id = ? ORDER BY timestamp DESC",
+                    (site_id,)
+                ).fetchall()
+            ]
+
+            clicks = [
+                dict(r) for r in conn.execute(
+                    "SELECT id, query_id, query, result_id, rank, target_url, timestamp FROM click_events WHERE site_id = ? ORDER BY timestamp DESC",
+                    (site_id,)
+                ).fetchall()
+            ]
+
+            feedback = [
+                dict(r) for r in conn.execute(
+                    "SELECT id, query, is_positive, timestamp FROM search_feedback WHERE site_id = ? ORDER BY timestamp DESC",
+                    (site_id,)
+                ).fetchall()
+            ]
+
+            overrides = [
+                dict(r) for r in conn.execute(
+                    "SELECT id, intent_phrase, target_url, action_label, pinned FROM overrides WHERE site_id = ?",
+                    (site_id,)
+                ).fetchall()
+            ]
+
+            synonyms = [
+                dict(r) for r in conn.execute(
+                    "SELECT id, phrase, canonical FROM synonyms WHERE site_id = ?",
+                    (site_id,)
+                ).fetchall()
+            ]
+
+            return {
+                "site": dict(site),
+                "leads": leads,
+                "query_logs": queries,
+                "click_events": clicks,
+                "feedback": feedback,
+                "overrides": overrides,
+                "synonyms": synonyms,
+                "exported_at": time.time()
+            }
+
+    def delete_site_data(self, site_id: str) -> bool:
+        with self._get_conn() as conn:
+            conn.execute("DELETE FROM leads WHERE site_id = ?", (site_id,))
+            conn.execute("DELETE FROM query_logs WHERE site_id = ?", (site_id,))
+            conn.execute("DELETE FROM click_events WHERE site_id = ?", (site_id,))
+            conn.execute("DELETE FROM search_feedback WHERE site_id = ?", (site_id,))
+            conn.execute("DELETE FROM overrides WHERE site_id = ?", (site_id,))
+            conn.execute("DELETE FROM synonyms WHERE site_id = ?", (site_id,))
+            conn.execute("DELETE FROM sections WHERE site_id = ?", (site_id,))
+            conn.execute("DELETE FROM crawl_jobs WHERE site_id = ?", (site_id,))
+            return True
+
+    def cleanup_old_data(self, site_id: str, days: int = 90) -> Dict[str, int]:
+        cutoff = time.time() - (days * 86400)
+        with self._get_conn() as conn:
+            leads_del = conn.execute("DELETE FROM leads WHERE site_id = ? AND timestamp < ?", (site_id, cutoff)).rowcount
+            queries_del = conn.execute("DELETE FROM query_logs WHERE site_id = ? AND timestamp < ?", (site_id, cutoff)).rowcount
+            clicks_del = conn.execute("DELETE FROM click_events WHERE site_id = ? AND timestamp < ?", (site_id, cutoff)).rowcount
+            feedback_del = conn.execute("DELETE FROM search_feedback WHERE site_id = ? AND timestamp < ?", (site_id, cutoff)).rowcount
+            return {
+                "leads_purged": leads_del,
+                "queries_purged": queries_del,
+                "clicks_purged": clicks_del,
+                "feedback_purged": feedback_del
+            }
 
     def get_overrides(self, site_id: str) -> List[OverrideRule]:
         with self._get_conn() as conn:
@@ -466,9 +576,13 @@ class DatabaseManager:
             """, (site_id,)).fetchall()
             leads = [
                 {
+                    "id": r["id"],
                     "query": r["query"],
                     "contact": r["visitor_contact"],
                     "note": r["note"],
+                    "consent": bool(r["consent"]) if "consent" in r.keys() else True,
+                    "consent_text": r["consent_text"] if "consent_text" in r.keys() else None,
+                    "consent_timestamp": r["consent_timestamp"] if "consent_timestamp" in r.keys() else None,
                     "timestamp": r["timestamp"]
                 }
                 for r in leads_rows

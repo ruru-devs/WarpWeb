@@ -601,6 +601,22 @@
             leadInput.className = "warpweb-lead-input";
             leadInput.placeholder = "Phone or WhatsApp number...";
             leadBox.appendChild(leadInput);
+            const consentLabel = document.createElement("label");
+            consentLabel.style.display = "flex";
+            consentLabel.style.alignItems = "flex-start";
+            consentLabel.style.gap = "8px";
+            consentLabel.style.fontSize = "11.5px";
+            consentLabel.style.color = "#64748b";
+            consentLabel.style.cursor = "pointer";
+            const consentCheck = document.createElement("input");
+            consentCheck.type = "checkbox";
+            consentCheck.checked = true;
+            consentCheck.style.marginTop = "2px";
+            const consentText = document.createElement("span");
+            consentText.textContent = "I consent to being contacted by site operators regarding this inquiry.";
+            consentLabel.appendChild(consentCheck);
+            consentLabel.appendChild(consentText);
+            leadBox.appendChild(consentLabel);
             const leadSubmit = document.createElement("button");
             leadSubmit.className = "warpweb-lead-submit";
             leadSubmit.textContent = "Request Instant Callback";
@@ -613,35 +629,46 @@
             resultsBox.appendChild(emptyDiv);
             leadSubmit.addEventListener("click", async () => {
               const leadContact = leadInput.value.trim();
-              if (leadContact) {
-                try {
-                  await fetch(`${apiHost}/api/leads`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ site_id: siteId, query, visitor_contact: leadContact })
-                  });
-                  resultsBox.innerHTML = "";
-                  const successDiv = document.createElement("div");
-                  successDiv.className = "warpweb-empty";
-                  const checkSpan = document.createElement("span");
-                  checkSpan.style.color = "#059669";
-                  checkSpan.style.fontSize = "28px";
-                  checkSpan.textContent = "\u2713";
-                  const pSuccess = document.createElement("p");
-                  pSuccess.style.marginTop = "8px";
-                  pSuccess.style.fontWeight = "600";
-                  pSuccess.textContent = "Request logged!";
-                  const pDetail = document.createElement("p");
-                  pDetail.style.fontSize = "13px";
-                  pDetail.style.color = "#64748b";
-                  pDetail.textContent = `Our staff will contact ${leadContact} regarding your request.`;
-                  successDiv.appendChild(checkSpan);
-                  successDiv.appendChild(pSuccess);
-                  successDiv.appendChild(pDetail);
-                  resultsBox.appendChild(successDiv);
-                } catch (e) {
-                  console.error("Lead submission failed:", e);
-                }
+              if (!leadContact) return;
+              if (!consentCheck.checked) {
+                leadDesc.textContent = "Please check the consent box to submit your contact details.";
+                leadDesc.style.color = "#ef4444";
+                return;
+              }
+              try {
+                await fetch(`${apiHost}/api/leads`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    site_id: siteId,
+                    query,
+                    visitor_contact: leadContact,
+                    consent: true,
+                    consent_text: consentText.textContent,
+                    consent_timestamp: Date.now() / 1e3
+                  })
+                });
+                resultsBox.innerHTML = "";
+                const successDiv = document.createElement("div");
+                successDiv.className = "warpweb-empty";
+                const checkSpan = document.createElement("span");
+                checkSpan.style.color = "#059669";
+                checkSpan.style.fontSize = "28px";
+                checkSpan.textContent = "\u2713";
+                const pSuccess = document.createElement("p");
+                pSuccess.style.marginTop = "8px";
+                pSuccess.style.fontWeight = "600";
+                pSuccess.textContent = "Request logged!";
+                const pDetail = document.createElement("p");
+                pDetail.style.fontSize = "13px";
+                pDetail.style.color = "#64748b";
+                pDetail.textContent = `Our staff will contact ${leadContact} regarding your request.`;
+                successDiv.appendChild(checkSpan);
+                successDiv.appendChild(pSuccess);
+                successDiv.appendChild(pDetail);
+                resultsBox.appendChild(successDiv);
+              } catch (e) {
+                console.error("Lead submission failed:", e);
               }
             });
             return;

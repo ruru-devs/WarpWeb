@@ -112,6 +112,9 @@ class LeadCaptureRequest(BaseModel):
     query: str = Field(..., max_length=300)
     visitor_contact: str = Field(..., min_length=3, max_length=150)
     note: Optional[str] = Field(None, max_length=1000)
+    consent: bool = Field(True)
+    consent_text: Optional[str] = Field("I consent to be contacted regarding this request.", max_length=500)
+    consent_timestamp: Optional[float] = None
     created_at: float = Field(default_factory=time.time)
 
     @field_validator("visitor_contact")
@@ -121,3 +124,7 @@ class LeadCaptureRequest(BaseModel):
         if len(cleaned) < 3:
             raise ValueError("Visitor contact must be at least 3 characters")
         return cleaned
+
+class RetentionCleanupRequest(BaseModel):
+    days: int = Field(90, ge=1, le=3650)
+

@@ -653,6 +653,26 @@
       leadInput.placeholder = 'Phone or WhatsApp number...';
       leadBox.appendChild(leadInput);
 
+      const consentLabel = document.createElement('label');
+      consentLabel.style.display = 'flex';
+      consentLabel.style.alignItems = 'flex-start';
+      consentLabel.style.gap = '8px';
+      consentLabel.style.fontSize = '11.5px';
+      consentLabel.style.color = '#64748b';
+      consentLabel.style.cursor = 'pointer';
+
+      const consentCheck = document.createElement('input');
+      consentCheck.type = 'checkbox';
+      consentCheck.checked = true;
+      consentCheck.style.marginTop = '2px';
+
+      const consentText = document.createElement('span');
+      consentText.textContent = 'I consent to being contacted by site operators regarding this inquiry.';
+
+      consentLabel.appendChild(consentCheck);
+      consentLabel.appendChild(consentText);
+      leadBox.appendChild(consentLabel);
+
       const leadSubmit = document.createElement('button');
       leadSubmit.className = 'warpweb-lead-submit';
       leadSubmit.textContent = 'Request Instant Callback';
@@ -670,13 +690,25 @@
 
       leadSubmit.addEventListener('click', async () => {
         const leadContact = leadInput.value.trim();
-        if (leadContact) {
-          try {
-            await fetch(`${apiHost}/api/leads`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ site_id: siteId, query: query, visitor_contact: leadContact })
-            });
+        if (!leadContact) return;
+        if (!consentCheck.checked) {
+          leadDesc.textContent = 'Please check the consent box to submit your contact details.';
+          leadDesc.style.color = '#ef4444';
+          return;
+        }
+        try {
+          await fetch(`${apiHost}/api/leads`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              site_id: siteId,
+              query: query,
+              visitor_contact: leadContact,
+              consent: true,
+              consent_text: consentText.textContent,
+              consent_timestamp: Date.now() / 1000
+            })
+          });
             resultsBox.innerHTML = '';
             const successDiv = document.createElement('div');
             successDiv.className = 'warpweb-empty';
@@ -699,7 +731,6 @@
           } catch (e) {
             console.error('Lead submission failed:', e);
           }
-        }
       });
       return;
     }
