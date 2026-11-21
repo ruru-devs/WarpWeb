@@ -56,8 +56,8 @@ def require_site_auth(
     stored_hash = site.get("api_key_hash")
     if not stored_hash:
         raise HTTPException(
-            status_code=500,
-            detail="Site has no configured API key. Please re-register or set key."
+            status_code=403,
+            detail="Site API key has been revoked or is not configured. Access denied."
         )
 
     provided_hash = hash_api_key(raw_key)

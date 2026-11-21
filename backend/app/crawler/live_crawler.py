@@ -22,6 +22,14 @@ from app.crawler.sectionizer import HTMLSectionizer
 from app.models import SectionNode
 from app.db.storage import DatabaseManager
 from app.indexer.hybrid_search import HybridIndex
+from app.security.ssrf import (
+    is_safe_domain,
+    resolve_and_validate_url,
+    safe_fetch_page,
+    safe_fetch_bytes,
+    clean_hostname,
+    MAX_TOTAL_CRAWL_BYTES
+)
 
 USER_AGENT = "WarpWebBot/1.0 (+https://warpweb.io/bot)"
 
@@ -40,10 +48,15 @@ def normalize_url(url: str) -> str:
     ))
 
 def is_same_domain(url1: str, url2: str) -> bool:
+    """
+    Strict hostname equality and dot-boundary subdomain validation.
+    Prevents suffix injection (e.g. notexample.com or example.com.evil.net)
+    and userinfo spoofing (example.com@evil.com).
+    """
     try:
-        netloc1 = urllib.parse.urlparse(url1).netloc.lower()
-        netloc2 = urllib.parse.urlparse(url2).netloc.lower()
-        return netloc1 == netloc2 or netloc1.endswith(f".{netloc2}") or netloc2.endswith(f".{netloc1}")
+        p2 = urllib.parse.urlsplit(url2) if "://" in url2 else None
+        target = p2.hostname if p2 and p2.hostname else clean_hostname(url2)
+        return is_safe_domain(url1, target)
     except Exception:
         return False
 
@@ -56,7 +69,8 @@ class LiveCrawler:
         max_depth: int = 3,
         respect_robots: bool = True,
         use_playwright: bool = False,
-        index_pdfs: bool = True
+        index_pdfs: bool = True,
+        max_total_bytes: int = MAX_TOTAL_CRAWL_BYTES
     ):
         self.site_id = site_id
         self.start_url = start_url
@@ -65,19 +79,27 @@ class LiveCrawler:
         self.respect_robots = respect_robots
         self.use_playwright = use_playwright
         self.index_pdfs = index_pdfs
+        self.max_total_bytes = max_total_bytes
+        self.total_bytes_crawled = 0
         self.db = DatabaseManager()
 
-        parsed = urllib.parse.urlparse(start_url)
-        self.base_domain = parsed.netloc.lower()
+        parsed = urllib.parse.urlsplit(start_url)
+        self.base_domain = clean_hostname(parsed.hostname or "")
         self.scheme = parsed.scheme.lower() or "https"
 
-        # Initialize robots.txt parser
+        # Initialize robots.txt parser with SSRF validation
         self.robot_parser = urllib.robotparser.RobotFileParser()
-        if self.respect_robots:
+        if self.respect_robots and self.base_domain:
             try:
                 robots_url = f"{self.scheme}://{self.base_domain}/robots.txt"
-                self.robot_parser.set_url(robots_url)
-                self.robot_parser.read()
+                content, _, err = safe_fetch_page(
+                    robots_url,
+                    allowed_domain=self.base_domain,
+                    max_bytes=512 * 1024,
+                    user_agent=USER_AGENT
+                )
+                if content:
+                    self.robot_parser.parse(content.splitlines())
             except Exception:
                 pass
 
@@ -114,72 +136,106 @@ class LiveCrawler:
         return page_links, pdf_links
 
     def fetch_page(self, url: str) -> Optional[str]:
-        """Fetches page content using either static httpx or Playwright."""
+        """Fetches page content with SSRF defenses using either static httpx or Playwright."""
+        if self.total_bytes_crawled >= self.max_total_bytes:
+            return None
+
         if self.use_playwright:
             try:
                 from playwright.sync_api import sync_playwright
                 with sync_playwright() as p:
                     browser = p.chromium.launch(headless=True)
                     page = browser.new_page(user_agent=USER_AGENT)
+
+                    # Intercept and validate every subrequest to prevent SSRF
+                    def route_handler(route):
+                        req_url = route.request.url
+                        is_safe, _, _ = resolve_and_validate_url(req_url, allowed_domain=self.base_domain)
+                        if not is_safe:
+                            route.abort()
+                        else:
+                            route.continue_()
+
+                    page.route("**/*", route_handler)
                     page.goto(url, wait_until="networkidle", timeout=15000)
                     content = page.content()
                     browser.close()
+
+                    content_len = len(content.encode("utf-8"))
+                    if self.total_bytes_crawled + content_len > self.max_total_bytes:
+                        return None
+                    self.total_bytes_crawled += content_len
                     return content
-            except Exception as e:
+            except Exception:
                 # Fallback to static fetch if Playwright fails
                 pass
 
         try:
-            with httpx.Client(follow_redirects=True, timeout=12.0, headers={"User-Agent": USER_AGENT}) as client:
-                res = client.get(url)
-                if res.status_code == 200 and "text/html" in res.headers.get("content-type", ""):
-                    return res.text
+            content, _, err = safe_fetch_page(
+                url,
+                allowed_domain=self.base_domain,
+                user_agent=USER_AGENT
+            )
+            if not content:
+                return None
+
+            content_len = len(content.encode("utf-8"))
+            if self.total_bytes_crawled + content_len > self.max_total_bytes:
+                return None
+            self.total_bytes_crawled += content_len
+            return content
         except Exception:
             return None
 
-        return None
-
     def extract_pdf_sections(self, pdf_url: str) -> List[SectionNode]:
         """Extracts text from linked PDF documents and turns them into sections with page references."""
-        if not self.index_pdfs:
+        if not self.index_pdfs or self.total_bytes_crawled >= self.max_total_bytes:
             return []
 
         sections: List[SectionNode] = []
         try:
             import io
             import pypdf
-            with httpx.Client(follow_redirects=True, timeout=15.0, headers={"User-Agent": USER_AGENT}) as client:
-                res = client.get(pdf_url)
-                if res.status_code != 200:
-                    return []
 
-                reader = pypdf.PdfReader(io.BytesIO(res.content))
-                pdf_name = pdf_url.split("/")[-1] or "Document.pdf"
+            pdf_bytes, _, err = safe_fetch_bytes(
+                pdf_url,
+                allowed_domain=self.base_domain,
+                user_agent=USER_AGENT
+            )
+            if not pdf_bytes:
+                return []
 
-                for page_num, page in enumerate(reader.pages, 1):
-                    text = page.extract_text() or ""
-                    clean_text = " ".join(text.split()).strip()
-                    if len(clean_text) < 40:
-                        continue
+            if self.total_bytes_crawled + len(pdf_bytes) > self.max_total_bytes:
+                return []
+            self.total_bytes_crawled += len(pdf_bytes)
 
-                    title = f"{pdf_name} - Page {page_num}"
-                    content_hash = hashlib.sha256(clean_text.encode("utf-8")).hexdigest()
-                    slug = re.sub(r'[^a-zA-Z0-9]', '_', pdf_name)[:30]
-                    node_id = f"sec_pdf_{slug}_p{page_num}"
+            reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+            pdf_name = pdf_url.split("/")[-1] or "Document.pdf"
 
-                    sections.append(SectionNode(
-                        id=node_id,
-                        url=f"{pdf_url}#page={page_num}",
-                        anchor_id=f"page-{page_num}",
-                        title=title,
-                        content=clean_text[:1400],
-                        keywords=list(set(re.findall(r'\b[a-zA-Z0-9_-]{3,}\b', clean_text.lower())))[:25],
-                        action_type="navigate",
-                        action_label="Open PDF Page",
-                        action_url=f"{pdf_url}#page={page_num}",
-                        content_hash=content_hash,
-                        metadata={"format": "pdf", "page": page_num, "filename": pdf_name}
-                    ))
+            for page_num, page in enumerate(reader.pages, 1):
+                text = page.extract_text() or ""
+                clean_text = " ".join(text.split()).strip()
+                if len(clean_text) < 40:
+                    continue
+
+                title = f"{pdf_name} - Page {page_num}"
+                content_hash = hashlib.sha256(clean_text.encode("utf-8")).hexdigest()
+                slug = re.sub(r'[^a-zA-Z0-9]', '_', pdf_name)[:30]
+                node_id = f"sec_pdf_{slug}_p{page_num}"
+
+                sections.append(SectionNode(
+                    id=node_id,
+                    url=f"{pdf_url}#page={page_num}",
+                    anchor_id=f"page-{page_num}",
+                    title=title,
+                    content=clean_text[:1400],
+                    keywords=list(set(re.findall(r'\b[a-zA-Z0-9_-]{3,}\b', clean_text.lower())))[:25],
+                    action_type="navigate",
+                    action_label="Open PDF Page",
+                    action_url=f"{pdf_url}#page={page_num}",
+                    content_hash=content_hash,
+                    metadata={"format": "pdf", "page": page_num, "filename": pdf_name}
+                ))
         except Exception:
             pass
 

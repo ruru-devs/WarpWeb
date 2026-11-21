@@ -10,6 +10,7 @@ Stores:
 import sqlite3
 import json
 import time
+import os
 import hashlib
 from typing import List, Dict, Any, Optional
 import numpy as np
@@ -187,17 +188,18 @@ def init_db(db_path: str = DB_PATH):
         ]
         cur.executemany("INSERT INTO synonyms (site_id, phrase, canonical) VALUES (?, ?, ?)", demo_synonyms)
 
-    # Seed demo keys if sites exist without api_key_hash
-    demo_keys = {
-        "apexcare-clinic": "ww_dev_apexcare_secret",
-        "shoppulse-commerce": "ww_dev_shoppulse_secret"
-    }
-    for sid, k in demo_keys.items():
-        k_hash = hashlib.sha256(k.encode("utf-8")).hexdigest()
-        cur.execute(
-            "UPDATE sites SET api_key_hash = ? WHERE site_id = ? AND (api_key_hash IS NULL OR api_key_hash = '')",
-            (k_hash, sid)
-        )
+    # Seed demo keys ONLY if explicitly opted in via environment variable (default: off)
+    if os.getenv("WARPWEB_SEED_DEMO_KEYS", "false").lower() in ("true", "1", "yes"):
+        demo_keys = {
+            "apexcare-clinic": "ww_dev_apexcare_secret",
+            "shoppulse-commerce": "ww_dev_shoppulse_secret"
+        }
+        for sid, k in demo_keys.items():
+            k_hash = hashlib.sha256(k.encode("utf-8")).hexdigest()
+            cur.execute(
+                "UPDATE sites SET api_key_hash = ? WHERE site_id = ? AND (api_key_hash IS NULL OR api_key_hash = '')",
+                (k_hash, sid)
+            )
 
     conn.commit()
     conn.close()
@@ -243,6 +245,23 @@ class DatabaseManager:
         k_hash = hashlib.sha256(raw_key.encode("utf-8")).hexdigest()
         with self._get_conn() as conn:
             conn.execute("UPDATE sites SET api_key_hash = ? WHERE site_id = ?", (k_hash, site_id))
+
+    def revoke_site_api_key(self, site_id: str) -> bool:
+        """Revokes a site's API key by clearing api_key_hash in the database."""
+        with self._get_conn() as conn:
+            cur = conn.cursor()
+            cur.execute("UPDATE sites SET api_key_hash = NULL WHERE site_id = ?", (site_id,))
+            conn.commit()
+            return cur.rowcount > 0
+
+    def rotate_site_api_key(self, site_id: str, new_key: str) -> bool:
+        """Rotates a site's API key with a new plaintext key hash."""
+        k_hash = hashlib.sha256(new_key.encode("utf-8")).hexdigest()
+        with self._get_conn() as conn:
+            cur = conn.cursor()
+            cur.execute("UPDATE sites SET api_key_hash = ? WHERE site_id = ?", (k_hash, site_id))
+            conn.commit()
+            return cur.rowcount > 0
 
     def save_sections(self, site_id: str, sections: List[SectionNode]):
         with self._get_conn() as conn:

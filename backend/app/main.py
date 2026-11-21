@@ -37,6 +37,10 @@ from app.security.rate_limiter import (
     rate_limit_search,
     rate_limit_leads
 )
+from app.security.ssrf import (
+    is_safe_domain,
+    resolve_and_validate_url
+)
 
 app = FastAPI(title="WarpWeb Intent & Navigation Engine", version="1.0.0")
 
@@ -365,7 +369,22 @@ async def trigger_site_crawl(
     if not site:
         raise HTTPException(status_code=404, detail=f"Site '{site_id}' not found.")
 
-    start_url = (payload.start_url if payload and payload.start_url else None) or f"https://{site['domain']}"
+    if payload and payload.start_url:
+        candidate_url = payload.start_url.strip()
+        if not is_safe_domain(candidate_url, site["domain"]):
+            raise HTTPException(
+                status_code=400,
+                detail=f"start_url '{candidate_url}' does not belong to registered domain '{site['domain']}'."
+            )
+        is_safe, resolved_ip, err = resolve_and_validate_url(candidate_url, allowed_domain=site["domain"])
+        if not is_safe:
+            raise HTTPException(
+                status_code=400,
+                detail=f"start_url failed SSRF validation: {err}"
+            )
+        start_url = candidate_url
+    else:
+        start_url = f"https://{site['domain']}"
     max_pages = payload.max_pages if payload else 50
     max_depth = payload.max_depth if payload else 3
     use_playwright = payload.use_playwright if payload else False
@@ -467,6 +486,48 @@ async def cleanup_retention_data(
         "site_id": site_id,
         "retention_days": days,
         "purged": purged_stats
+    }
+
+@app.post("/api/keys/rotate/{site_id}")
+async def rotate_api_key(
+    site_id: str,
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    authorization: Optional[str] = Header(None)
+):
+    """Rotates site API key. Requires authentication with current valid key."""
+    require_site_auth(site_id, x_api_key, authorization)
+    site = db.get_site(site_id)
+    if not site:
+        raise HTTPException(status_code=404, detail=f"Site '{site_id}' not found.")
+    new_key = generate_api_key()
+    success = db.rotate_site_api_key(site_id, new_key)
+    if not success:
+        raise HTTPException(status_code=404, detail=f"Site '{site_id}' not found.")
+    return {
+        "status": "success",
+        "site_id": site_id,
+        "api_key": new_key,
+        "message": "API key rotated successfully. Store this new key safely."
+    }
+
+@app.post("/api/keys/revoke/{site_id}")
+async def revoke_api_key(
+    site_id: str,
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    authorization: Optional[str] = Header(None)
+):
+    """Revokes site API key. Requires authentication with current valid key."""
+    require_site_auth(site_id, x_api_key, authorization)
+    site = db.get_site(site_id)
+    if not site:
+        raise HTTPException(status_code=404, detail=f"Site '{site_id}' not found.")
+    success = db.revoke_site_api_key(site_id)
+    if not success:
+        raise HTTPException(status_code=404, detail=f"Site '{site_id}' not found.")
+    return {
+        "status": "success",
+        "site_id": site_id,
+        "message": "API key revoked. Owner/admin access is disabled until a new key is provisioned."
     }
 
 @app.get("/warpweb.js")

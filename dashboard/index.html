@@ -179,24 +179,38 @@
     let currentSiteId = "apexcare-clinic";
     const API_BASE = "http://localhost:8000";
 
-    const defaultDevKeys = {
-      "apexcare-clinic": "ww_dev_apexcare_secret",
-      "shoppulse-commerce": "ww_dev_shoppulse_secret"
-    };
+    function getStoredApiKey(siteId) {
+      try {
+        return localStorage.getItem('warpweb_key_' + siteId) || "";
+      } catch (e) {
+        return "";
+      }
+    }
+
+    function setStoredApiKey(siteId, key) {
+      try {
+        if (key) {
+          localStorage.setItem('warpweb_key_' + siteId, key);
+        } else {
+          localStorage.removeItem('warpweb_key_' + siteId);
+        }
+      } catch (e) {}
+    }
 
     function getApiKey() {
       const inputEl = document.getElementById('siteApiKey');
       if (inputEl && inputEl.value.trim()) {
         return inputEl.value.trim();
       }
-      return defaultDevKeys[currentSiteId] || "";
+      return getStoredApiKey(currentSiteId);
     }
 
     function initApiKeyInput() {
       const inputEl = document.getElementById('siteApiKey');
       if (inputEl) {
-        inputEl.value = defaultDevKeys[currentSiteId] || "";
+        inputEl.value = getStoredApiKey(currentSiteId);
         inputEl.addEventListener('change', () => {
+          setStoredApiKey(currentSiteId, inputEl.value.trim());
           loadAnalytics();
         });
       }

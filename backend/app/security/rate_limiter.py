@@ -1,11 +1,18 @@
 """
 In-memory sliding window rate limiter for WarpWeb API endpoints.
 Configurable per-IP and per-site limits with automatic window pruning.
+
+NOTE ON MULTI-WORKER / DISTRIBUTED ARCHITECTURE:
+This limiter stores window state in-process in memory. When running with multiple
+worker processes (e.g. Uvicorn with >1 workers or multiple pods/instances),
+state is not synchronized across workers. A distributed key-value store such as
+Redis (e.g. using Redis sorted sets or token bucket algorithms) is proposed for
+production multi-worker clustering.
 """
 import time
 import os
 from collections import defaultdict
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
 from fastapi import Request, HTTPException
 
 class SlidingWindowRateLimiter:
@@ -61,15 +68,28 @@ search_site_limiter = SlidingWindowRateLimiter(default_limit=SEARCH_SITE_LIMIT, 
 lead_ip_limiter = SlidingWindowRateLimiter(default_limit=LEAD_IP_LIMIT, window_seconds=60, name="lead_ip")
 lead_site_limiter = SlidingWindowRateLimiter(default_limit=LEAD_SITE_LIMIT, window_seconds=60, name="lead_site")
 
+# Configurable trusted proxies (default: loopback only)
+TRUSTED_PROXIES_RAW = os.getenv("WARPWEB_TRUSTED_PROXIES", "127.0.0.1,::1")
+TRUSTED_PROXIES: Set[str] = {p.strip() for p in TRUSTED_PROXIES_RAW.split(",") if p.strip()}
+
 def get_client_ip(request: Request) -> str:
-    """Safely extracts client IP, honoring X-Forwarded-For if available."""
-    forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        # First IP in chain is client IP
-        return forwarded.split(",")[0].strip()
-    if request.client and request.client.host:
-        return request.client.host
-    return "127.0.0.1"
+    """
+    Safely extracts client IP.
+    X-Forwarded-For is ONLY trusted if the direct connection originates
+    from a configured trusted proxy (WARPWEB_TRUSTED_PROXIES).
+    Otherwise, the socket connection address (request.client.host) is used.
+    """
+    socket_ip = request.client.host if (request.client and request.client.host) else "127.0.0.1"
+
+    if socket_ip in TRUSTED_PROXIES:
+        forwarded = request.headers.get("X-Forwarded-For")
+        if forwarded:
+            # First IP in chain is client IP
+            client_ip = forwarded.split(",")[0].strip()
+            if client_ip:
+                return client_ip
+
+    return socket_ip
 
 def rate_limit_search(request: Request, site_id: str):
     ip = get_client_ip(request)
